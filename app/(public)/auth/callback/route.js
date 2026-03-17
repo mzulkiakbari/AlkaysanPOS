@@ -33,7 +33,18 @@ export async function GET(req) {
     );
 
     if (!tokenRes.ok) {
-        return NextResponse.redirect(new URL("/login?error=token_failed", req.url));
+        let errorType = "token_failed";
+        try {
+            const errorData = await tokenRes.json();
+            if (errorData.error === "invalid_grant") {
+                errorType = "invalid_grant";
+            } else if (errorData.error) {
+                errorType = errorData.error;
+            }
+        } catch (e) {
+            // If response is not JSON, stick with default
+        }
+        return NextResponse.redirect(new URL(`/?error=${errorType}`, req.url));
     }
 
     const token = await tokenRes.json();

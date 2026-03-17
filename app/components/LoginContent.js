@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { isAuthenticated } from '../hooks/useHelpers';
 import { AlkaysanLogin } from '@noonor/alkaysan-one';
@@ -10,9 +10,23 @@ import { AlkaysanLogin } from '@noonor/alkaysan-one';
 export default function LoginContent({ withBranding = false, isLoadingOverride = false }) {
     const router = useRouter();
     const { loginWithSSO } = useAuth();
+    const searchParams = useSearchParams();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(isLoadingOverride);
     const [isElectron, setIsElectron] = useState(false);
+
+    useEffect(() => {
+        const errorCode = searchParams.get('error');
+        if (errorCode) {
+            const errorMessages = {
+                'token_failed': 'Gagal mendapatkan token akses. Silakan coba lagi.',
+                'invalid_grant': 'Kode otorisasi tidak valid atau sudah kedaluwarsa.',
+                'invalid_code': 'Kode login tidak valid.',
+                'access_denied': 'Akses ditolak oleh penyedia layanan.',
+            };
+            setError(errorMessages[errorCode] || `Terjadi kesalahan saat login (${errorCode}).`);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         setIsLoading(isLoadingOverride);
@@ -209,8 +223,14 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
                         )}
 
                         {error && (
-                            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                                {error}
+                            <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm flex gap-3 items-start animate-in fade-in slide-in-from-top-4 duration-300">
+                                <div className="mt-0.5">
+                                    <ExclamationCircleIcon className="w-5 h-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-red-700">Terjadi Kesalahan</h3>
+                                    <p className="text-xs text-red-600/80 mt-0.5 font-medium">{error}</p>
+                                </div>
                             </div>
                         )}
 
