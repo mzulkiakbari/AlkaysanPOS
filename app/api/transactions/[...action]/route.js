@@ -19,12 +19,9 @@ async function handleRequest(req, params, method) {
     const { action } = params;
     // Join the action array into a path string if it's a catch-all route (Next.js [...action])
     const actionPath = Array.isArray(action) ? action.join('/') : action;
-    const accessToken = req.cookies.get('access_token')?.value;
-    const { searchParams } = new URL(req.url);
-    const shortName = searchParams.get('shortName');
-    const uniqueId = searchParams.get('uniqueId');
+    const isPublicAction = method === 'GET' && actionPath.startsWith('get/');
 
-    if (!accessToken) {
+    if (!accessToken && !isPublicAction) {
         return NextResponse.json({
             ok: false,
             message: "You must have access token as bearer token in authorization."
@@ -61,7 +58,7 @@ async function handleRequest(req, params, method) {
         const options = {
             method,
             headers: {
-                'Authorization': `Bearer ${token}`,
+                ...(token && { 'Authorization': `Bearer ${token}` }),
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             }

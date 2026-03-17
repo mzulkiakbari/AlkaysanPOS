@@ -1,15 +1,26 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../../context/AuthContext';
 import { ArrowPathIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import { toPng } from 'html-to-image';
 
 export default function TransactionPrintPage({ params: paramsPromise }) {
     const params = use(paramsPromise);
+    const searchParams = useSearchParams();
     const { id } = params;
     const { selectedBranch, branches } = useAuth();
-    const currentBranch = selectedBranch || branches[0];
+    
+    // Extract from URL if not logged in
+    const urlShortName = searchParams.get('shortName');
+    const urlUniqueId = searchParams.get('uniqueId');
+
+    const currentBranch = selectedBranch || (branches && branches.length > 0 ? branches[0] : null);
+    
+    // Determine store info (prefer AuthContext, fallback to URL)
+    const storeShortName = currentBranch?.storeData?.short_name || urlShortName;
+    const storeUniqueId = currentBranch?.uniqueId || urlUniqueId;
 
     const [isLoading, setIsLoading] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -17,10 +28,15 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
     const [error, setError] = useState(null);
 
     const fetchTransactionDetail = async () => {
-        if (!id || !currentBranch) return;
+        if (!id || !storeShortName || !storeUniqueId) {
+            if (!id) setError('ID Transaksi tidak ditemukan');
+            else if (!storeShortName || !storeUniqueId) setError('Informasi toko tidak lengkap di URL');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/transactions/get/${id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`);
+            const res = await fetch(`/api/transactions/get/${id}?shortName=${storeShortName}&uniqueId=${storeUniqueId}`);
             const result = await res.json();
             if (result.success) {
                 setData(result.data);
@@ -64,7 +80,7 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
     // ... existing effects and helpers ...
     useEffect(() => {
         fetchTransactionDetail();
-    }, [id, currentBranch]);
+    }, [id, storeShortName, storeUniqueId]);
 
     useEffect(() => {
         if (data) {
