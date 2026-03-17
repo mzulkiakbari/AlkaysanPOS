@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import DashboardContent from '../components/DashboardContent';
@@ -37,6 +37,23 @@ export default function Home() {
         }
     }, [isAuthLoading, user, router]);
 
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main)]">
+                <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        }>
+            <HomeContent 
+                user={user} 
+                isAuthLoading={isAuthLoading} 
+                isFetching={isFetching} 
+                hasBranch={hasBranch} 
+            />
+        </Suspense>
+    );
+}
+
+function HomeContent({ user, isAuthLoading, isFetching, hasBranch }) {
     // Show processing state if context is loading OR we are manually fetching profile
     if (isAuthLoading || isFetching) {
         return <LoginContent withBranding isLoadingOverride={true} />;
