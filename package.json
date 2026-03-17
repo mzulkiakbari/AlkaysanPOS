@@ -1,0 +1,72 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "next dev -p 4200 --turbopack",
+    "dev:ssl": "local-ssl-proxy --source 3002 --hostname 127.0.0.1 --target 4200",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "@heroicons/react": "^2.2.0",
+    "@noonor/alkaysan-one": "^1.0.9",
+    "better-sqlite3": "^12.8.0",
+    "chart.js": "^4.5.1",
+    "cookies-next": "^6.1.1",
+    "dexie": "^4.3.0",
+    "dexie-react-hooks": "^4.2.0",
+    "html-to-image": "^1.11.13",
+    "next": "16.1.2",
+    "react": "19.2.3",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "25.0.9",
+    "@types/react": "19.2.8",
+    "autoprefixer": "^10.4.27",
+    "axios": "^1.13.6",
+    "dotenv-cli": "^11.0.0",
+    "electron": "^41.0.2",
+    "electron-builder": "^26.8.1",
+    "electron-is-dev": "^3.0.1",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.2",
+    "local-ssl-proxy": "^2.0.5",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1"
+  },
+  "build": {
+    "appId": "com.alkaysan.pos",
+    "productName": "Alkaysan POS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable",
+        "zip"
+      ],
+      "verifyUpdateCodeSignature": false
+    },
+    "forceCodeSigning": false,
+    "asar": false,
+    "files": [
+      "main.js",
+      "package.json",
+      "node_modules/**/*",
+      ".next/**/*",
+      "public/**/*",
+      ".env",
+      ".env.development.local"
+    ]
+  }
+}

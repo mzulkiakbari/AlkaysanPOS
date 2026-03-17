@@ -1,0 +1,16 @@
+{
+  "name": "Alkaysan Cashier",
+  "short_name": "Kasir",
+  "description": "AI POS SYSTEM Offline Ready",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2F4F4F",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
