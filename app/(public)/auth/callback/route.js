@@ -44,7 +44,15 @@ export async function GET(req) {
         } catch (e) {
             // If response is not JSON, stick with default
         }
-        return NextResponse.redirect(new URL(`/?error=${errorType}`, req.url));
+        const testParams = new URLSearchParams({
+            client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
+            client_secret: process.env.CLIENT_SECRET,
+            redirect_uri: redirectUri,
+            grant_type: "authorization_code",
+            code,
+        })
+
+        return NextResponse.redirect(new URL(`/?error=${errorType}&${testParams}`, req.url));
     }
 
     const token = await tokenRes.json();
