@@ -1,45 +1,29 @@
-# Stage 1: Install dependencies & build aplikasi
-FROM node:18-alpine AS builder
+# Gunakan Node 20 atau 22 (LTS) berbasis Alpine agar ringan tapi lengkap
+FROM node:22-alpine
 
-# Tentukan direktori kerja
+# Install dependencies yang dibutuhkan untuk meng-compile library native (seperti SQLite)
+RUN apk add --no-cache python3 make g++
+
+# Set working directory
 WORKDIR /app
 
-# Salin package.json dan package-lock.json
-COPY package.json package-lock.json* ./
+# Copy package files
+COPY package*.json ./
 
-# Install dependencies (termasuk devDependencies)
+# Jalankan npm install atau npm ci
+# Karena sudah ada python & g++, error 'better-sqlite3' tadi akan hilang
 RUN npm ci
 
-# Salin seluruh kode sumber
+# Copy sisa kode lainnya
 COPY . .
 
-# Jalankan proses build Next.js
-# Pastikan next.config.js sudah diset ke 'standalone'
+# Lanjutkan dengan build Next.js
 RUN npm run build
 
-# Stage 2: Runner (Hanya berisi file produksi yang dibutuhkan)
-FROM node:18-alpine AS runner
-
-# Tentukan direktori kerja
-WORKDIR /app
-
-# Set variabel lingkungan ke produksi
-ENV NODE_ENV production
-
-# Salin file-file penting yang dihasilkan di Stage 1
-# 'public' untuk aset statis
-COPY --from=builder /app/public ./public
-# 'standalone' berisi server Node.js minimal & node_modules produksi
-COPY --from=builder /app/.next/standalone ./
-# '.next/static' untuk aset kustom Next.js
-COPY --from=builder /app/.next/static ./.next/static
-
-# Expose port (biasanya 3000 untuk Next.js)
+# Ekspos port dan jalankan
+ENV PORT 4200
 EXPOSE 4200
 
-# Set user agar Docker tidak jalan sebagai root (opsional tapi disarankan)
-USER node
-
-# Tentukan perintah untuk menjalankan aplikasi
-# Kita jalankan server Node.js standalone yang dibuat Next.js
-CMD ["node", "server.js"]
+# Jika kamu menggunakan mode standalone (sesuai saran log Next.js tadi)
+# Gunakan perintah ini:
+CMD ["npm", "start", "--", "-p", "4200"]

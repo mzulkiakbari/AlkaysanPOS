@@ -25,7 +25,7 @@ export async function GET(req) {
             body: new URLSearchParams({
                 client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
                 client_secret: process.env.CLIENT_SECRET,
-                redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI,
+                redirect_uri: redirectUri,
                 grant_type: "authorization_code",
                 code,
             }),
@@ -33,18 +33,7 @@ export async function GET(req) {
     );
 
     if (!tokenRes.ok) {
-        let errorType = "token_failed";
-        try {
-            const errorData = await tokenRes.json();
-            if (errorData.error === "invalid_grant") {
-                errorType = "invalid_grant";
-            } else if (errorData.error) {
-                errorType = errorData.error;
-            }
-        } catch (e) {
-            // If response is not JSON, stick with default
-        }
-        return NextResponse.redirect(new URL(`/?error=${errorType}&`, req.url));
+        return NextResponse.redirect(new URL("/?error=token_failed", req.url));
     }
 
     const token = await tokenRes.json();
