@@ -24,6 +24,9 @@ export const metadata = {
   title: "Alkaysan Cashier",
   description: "Alkaysan Cashier",
   manifest: "/manifest.json",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport = {

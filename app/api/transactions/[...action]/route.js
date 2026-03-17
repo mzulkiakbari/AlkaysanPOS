@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req, props) {
     const params = await props.params;
     return handleRequest(req, params, 'GET');
@@ -15,24 +17,27 @@ export async function PUT(req, props) {
     return handleRequest(req, params, 'PUT');
 }
 
+export async function DELETE(req, props) {
+    const params = await props.params;
+    return handleRequest(req, params, 'DELETE');
+}
+
 async function handleRequest(req, params, method) {
-    const { action } = params;
-    // Join the action array into a path string if it's a catch-all route (Next.js [...action])
-    const actionPath = Array.isArray(action) ? action.join('/') : action;
-    const isPublicAction = method === 'GET' && actionPath.startsWith('get/');
+    const action = params?.action; // Array of path segments
+    let actionPath = Array.isArray(action) ? action.join('/') : (action || 'getAll');
+
+    const accessToken = req.cookies.get('access_token')?.value;
+    const shortName = req.nextUrl.searchParams.get('shortName');
+    const uniqueId = req.nextUrl.searchParams.get('uniqueId');
+
+    const isPublicAction = method === 'GET' && typeof actionPath === 'string' && actionPath.startsWith('get/');
 
     if (!accessToken && !isPublicAction) {
-        return NextResponse.json({
-            ok: false,
-            message: "You must have access token as bearer token in authorization."
-        }, { status: 401 });
+        return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
     }
 
     if (!shortName || !uniqueId) {
-        return NextResponse.json({
-            ok: false,
-            message: "Missing shortName or uniqueId."
-        }, { status: 400 });
+        return NextResponse.json({ ok: false, message: "Missing store info" }, { status: 400 });
     }
 
     // Capture body for POST/PUT requests
@@ -45,15 +50,22 @@ async function handleRequest(req, params, method) {
         }
     }
 
-    const fetchTransaction = async (token) => {
-        const url = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}/${shortName.toLowerCase()}/${uniqueId}/api/v2/transactions/${actionPath}`);
+    const fetchBackend = async (token) => {
+        const baseUrl = String(process.env.NEXT_PUBLIC_API_BASE_URL || "").trim();
+        let targetUrl = `${baseUrl}/${shortName.toLowerCase()}/${uniqueId}/api/v2/transactions/${actionPath}`;
 
         // Forward all other search params
-        searchParams.forEach((value, key) => {
+        const query = new URLSearchParams();
+        req.nextUrl.searchParams.forEach((value, key) => {
             if (key !== 'shortName' && key !== 'uniqueId') {
-                url.searchParams.append(key, value);
+                query.append(key, value);
             }
         });
+
+        const queryString = query.toString();
+        if (queryString) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + queryString;
+        }
 
         const options = {
             method,
@@ -61,18 +73,19 @@ async function handleRequest(req, params, method) {
                 ...(token && { 'Authorization': `Bearer ${token}` }),
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
-            }
+            },
+            cache: 'no-store'
         };
 
         if (body) {
             options.body = JSON.stringify(body);
         }
 
-        return fetch(url.toString(), options);
+        return fetch(targetUrl, options);
     };
 
     try {
-        let response = await fetchTransaction(accessToken);
+        let response = await fetchBackend(accessToken);
 
         if (!response.ok && response.status === 401) {
             const refreshToken = req.cookies.get('refresh_token')?.value;
@@ -91,7 +104,7 @@ async function handleRequest(req, params, method) {
 
                     if (tokenRes.ok) {
                         const token = await tokenRes.json();
-                        const retryRes = await fetchTransaction(token.access_token);
+                        const retryRes = await fetchBackend(token.access_token);
 
                         if (retryRes.ok) {
                             const result = await retryRes.json();
@@ -113,14 +126,14 @@ async function handleRequest(req, params, method) {
             const errorResult = await response.json().catch(() => ({}));
             return NextResponse.json({
                 ok: false,
-                message: errorResult.message || `Failed to ${action} transaction data.`
+                message: errorResult.message || `Failed to ${actionPath} transaction data.`
             }, { status: response.status });
         }
 
         const result = await response.json();
         return NextResponse.json(result);
     } catch (error) {
-        console.error(`Transaction Proxy ${action} Error:`, error);
-        return NextResponse.json({ ok: false, message: 'Internal server error' }, { status: 500 });
+        console.error(`Transaction Proxy ${actionPath} Error:`, error);
+        return NextResponse.json({ ok: false, message: 'Internal server error', error: error.message }, { status: 500 });
     }
 }

@@ -1,6 +1,6 @@
 {
-  "name": "Alkaysan Cashier",
-  "short_name": "Kasir",
+  "name": "Alkaysan POS",
+  "short_name": "Alkaysan POS",
   "description": "AI POS SYSTEM Offline Ready",
   "display": "standalone",
   "background_color": "#ffffff",

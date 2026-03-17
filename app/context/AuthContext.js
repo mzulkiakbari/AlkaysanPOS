@@ -88,10 +88,10 @@ export function AuthProvider({ children }) {
         try {
             const res = await fetch('/api/user/profile', { cache: 'no-store' });
             if (res.status === 401) {
-                const currentPath = window.location.pathname + window.location.search;
+                const fullPath = window.location.pathname + window.location.search;
                 logoutLocal();
                 // Save redirect path after logoutLocal clears localStorage
-                localStorage.setItem('auth_redirect', currentPath);
+                localStorage.setItem('auth_redirect', fullPath);
                 return null;
             }
 
@@ -160,10 +160,10 @@ export function AuthProvider({ children }) {
 
         const handleUnauthorized = () => {
             console.warn('Unauthorized access detected, logging out...');
-            const currentPath = window.location.pathname + window.location.search;
+            const fullPath = window.location.pathname + window.location.search;
             logoutLocal();
             // Save redirect path after logoutLocal clears localStorage
-            localStorage.setItem('auth_redirect', currentPath);
+            localStorage.setItem('auth_redirect', fullPath);
         };
 
         window.addEventListener('auth:unauthorized', handleUnauthorized);
