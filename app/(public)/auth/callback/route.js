@@ -25,7 +25,7 @@ export async function GET(req) {
             body: new URLSearchParams({
                 client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
                 client_secret: process.env.CLIENT_SECRET,
-                redirect_uri: redirectUri,
+                redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI,
                 grant_type: "authorization_code",
                 code,
             }),
