@@ -33,10 +33,7 @@ export async function GET(req) {
     );
 
     if (!tokenRes.ok) {
-        console.error('Token Exchange Failed:', tokenRes);
-        setTimeout(() => {
-            return NextResponse.redirect(new URL("/login?error=token_failed", req.url));
-        }, 5000);
+        return NextResponse.redirect(new URL("/login?error=token_failed", req.url));
     }
 
     const token = await tokenRes.json();
