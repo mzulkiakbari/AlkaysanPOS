@@ -3,25 +3,29 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import {
-    XMarkIcon,
-    PhotoIcon,
     PlusIcon,
     TrashIcon,
     TagIcon,
     ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import CategorySelectionModal from './CategorySelectionModal';
+import { useAuth } from '../context/AuthContext';
+import { GenerateProductCode } from '../hooks/useHelpers';
 
 export default function ProductModal({ isOpen, onClose, product, onSave, categories = [] }) {
+    const { user } = useAuth();
+
     const [formData, setFormData] = useState({
         Nama_Produk: '',
         Kode_Produk: '',
         Kategori: '',
         Satuan: '',
         dijual: 1,
-        is_dimension: 0,
-        is_nego: 0,
-        is_a3: 0,
+        isdimensi: 0,
+        isopen: 0,
+        click: 0,
+        harga_beli: 0,
+        modifiedBy: [user?.nama_depan_karyawan, user?.nama_belakang_karyawan].join(' '),
         prices: [{ jenis_harga: 'UMUM', harga: 0, min_order: 1 }]
     });
 
@@ -78,9 +82,11 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
             setFormData({
                 ...product,
                 dijual: parseInt(product.dijual),
-                is_dimension: parseInt(product.is_dimension || 0),
-                is_nego: parseInt(product.is_nego || 0),
-                is_a3: parseInt(product.is_a3 || 0),
+                isdimensi: parseInt(product.isdimensi || 0),
+                isopen: parseInt(product.isopen || 0),
+                click: parseInt(product.click || 0),
+                harga_beli: Number(product.harga_beli || product.hpp || 0),
+                modifiedBy: [user?.nama_depan_karyawan, user?.nama_belakang_karyawan].join(' '),
                 prices: product.prices?.map(p => ({ ...p, min_order: p.min_order || 1 })) || [{ jenis_harga: 'UMUM', harga: 0, min_order: 1 }]
             });
             setIsAutoCode(false);
@@ -91,32 +97,22 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
                 Kategori: '',
                 Satuan: '',
                 dijual: 1,
-                is_dimension: 0,
-                is_nego: 0,
-                is_a3: 0,
+                isdimensi: 0,
+                isopen: 0,
+                click: 0,
+                harga_beli: 0,
+                modifiedBy: [user?.nama_depan_karyawan, user?.nama_belakang_karyawan].join(' '),
                 prices: [{ jenis_harga: 'UMUM', harga: 0, min_order: 1 }]
             });
             setIsAutoCode(true);
         }
     }, [product, isOpen]);
 
-    const generateCode = (name) => {
-        if (!name) return '';
-        const initials = name
-            .split(' ')
-            .map(word => word[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 3);
-        const random = Math.floor(1000 + Math.random() * 9000);
-        return `${initials}${random}`;
-    };
-
     const handleNameChange = (e) => {
         const name = e.target.value;
         const updates = { Nama_Produk: name };
         if (isAutoCode && !product) {
-            updates.Kode_Produk = generateCode(name);
+            updates.Kode_Produk = GenerateProductCode(name);
         }
         setFormData(prev => ({ ...prev, ...updates }));
     };
@@ -258,6 +254,21 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
                             </button>
                         </div>
                         <div className="grid grid-cols-2 gap-y-3 pt-2">
+                            {/* Harga Beli (HPP) */}
+                            <div className="space-y-1.5 col-span-2 mb-1">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Harga Beli (HPP)</label>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">Rp</div>
+                                    <input
+                                        type="number"
+                                        name="harga_beli"
+                                        value={formData.harga_beli || ''}
+                                        onChange={handleChange}
+                                        placeholder="0"
+                                        className="input !pl-10 no-spinner font-bold"
+                                    />
+                                </div>
+                            </div>
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="checkbox"
@@ -271,9 +282,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="is_dimension"
-                                    checked={formData.is_dimension === 1}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, is_dimension: e.target.checked ? 1 : 0 }))}
+                                    name="isdimensi"
+                                    checked={formData.isdimensi === 1}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, isdimensi: e.target.checked ? 1 : 0 }))}
                                     className="w-5 h-5 rounded-lg border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
                                 />
                                 <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Produk Dimensi</span>
@@ -281,9 +292,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="is_nego"
-                                    checked={formData.is_nego === 1}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, is_nego: e.target.checked ? 1 : 0 }))}
+                                    name="isopen"
+                                    checked={formData.isopen === 1}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, isopen: e.target.checked ? 1 : 0 }))}
                                     className="w-5 h-5 rounded-lg border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
                                 />
                                 <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Bisa Nego?</span>
@@ -291,9 +302,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="is_a3"
-                                    checked={formData.is_a3 === 1}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, is_a3: e.target.checked ? 1 : 0 }))}
+                                    name="click"
+                                    checked={formData.click === 1}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, click: e.target.checked ? 1 : 0 }))}
                                     className="w-5 h-5 rounded-lg border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
                                 />
                                 <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Produk A3?</span>

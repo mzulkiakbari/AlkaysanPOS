@@ -100,3 +100,27 @@ export const GetLocalDate = (date = new Date()) => {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+
+export const GenerateProductCode = (name) => {
+    return name.split(' ') // Pecah kalimat berdasarkan spasi
+        .map(word => {
+            // Bersihkan karakter non-huruf (opsional)
+            const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+
+            if (cleanWord.length === 0) return "";
+            if (cleanWord.length === 1) return cleanWord;
+            if (cleanWord.length === 2) return cleanWord;
+
+            const first = cleanWord[0];
+            const last = cleanWord[cleanWord.length - 1];
+
+            // Ambil posisi tengah (pembulatan ke bawah jika genap)
+            const midIndex = Math.floor((cleanWord.length - 1) / 2);
+            const mid = cleanWord[midIndex];
+
+            // Gabungkan dan ubah ke uppercase (opsional)
+            return (first + mid + last).toUpperCase();
+        })
+        .filter(part => part !== "") // Buang string kosong jika ada spasi ganda
+        .join('-'); // Gabungkan dengan tanda hubung
+}

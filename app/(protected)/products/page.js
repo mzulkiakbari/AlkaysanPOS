@@ -10,9 +10,11 @@ import {
     MagnifyingGlassIcon,
     PencilIcon,
     TrashIcon,
+    ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import ProductModal from '../../components/ProductModal';
 import Modal from '../../components/Modal';
+import Toast from '../../components/Toast';
 
 export default function ProductsPage() {
     const { selectedBranch, branches } = useAuth();
@@ -69,14 +71,21 @@ export default function ProductsPage() {
     const handleSaveProduct = async (data) => {
         setIsProcessing(true);
         try {
-            const action = selectedProduct ? 'update' : 'create';
             const method = selectedProduct ? 'PUT' : 'POST';
             const uri = selectedProduct
-                ? `/api/products/update/${selectedProduct.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`
-                : `/api/products/create?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
+                ? `/api/products/edit/${selectedProduct.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`
+                : `/api/products/add?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
 
-            // Mock success for now as API is not ready
-            console.log(`${action} product:`, data);
+            const res = await fetch(uri, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const result = await res.json();
+
+            if (!res.ok || result.success === false) {
+                throw new Error(result.message || 'Gagal menyimpan produk');
+            }
 
             setToast({ show: true, message: `Produk berhasil ${selectedProduct ? 'diperbarui' : 'ditambahkan'}`, type: 'success' });
 
@@ -97,7 +106,7 @@ export default function ProductsPage() {
             fetchProducts(pagination.page);
         } catch (error) {
             console.error('Error saving product:', error);
-            setToast({ show: true, message: 'Gagal menyimpan produk', type: 'error' });
+            setToast({ show: true, message: error.message || 'Gagal menyimpan produk', type: 'error' });
         } finally {
             setIsProcessing(false);
         }
@@ -106,8 +115,15 @@ export default function ProductsPage() {
     const handleDeleteProduct = async () => {
         setIsProcessing(true);
         try {
-            console.log('Deleting product:', selectedProduct.id);
-            // Mock success
+            const res = await fetch(`/api/products/delete/${selectedProduct.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`, {
+                method: 'DELETE',
+            });
+            const result = await res.json();
+
+            if (!res.ok || result.success === false) {
+                throw new Error(result.message || 'Gagal menghapus produk');
+            }
+
             setToast({ show: true, message: 'Produk berhasil dihapus', type: 'success' });
             setShowDeleteModal(false);
             fetchProducts(pagination.page);
@@ -222,7 +238,7 @@ export default function ProductsPage() {
                                     <tr className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                                         <th className="px-6 py-4">Produk</th>
                                         <th className="px-6 py-4">Kategori</th>
-                                        <th className="px-6 py-4">Harga (Umum)</th>
+                                        <th className="px-6 py-4">Harga</th>
                                         <th className="px-6 py-4 text-center">Satuan</th>
                                         <th className="px-6 py-4 text-center">Status</th>
                                         <th className="px-6 py-4 text-right">Aksi</th>
@@ -237,7 +253,6 @@ export default function ProductsPage() {
                                         </tr>
                                     ) : (
                                         products.map((product, idx) => {
-                                            const displayPrice = product.prices?.find(p => p.jenis_harga === 'UMUM')?.harga || 0;
                                             return (
                                                 <tr key={product.id || idx} className="hover:bg-[var(--bg-main)]/50 transition-colors group">
                                                     <td className="px-6 py-4">
@@ -245,8 +260,22 @@ export default function ProductsPage() {
                                                         <div className="text-[10px] text-[var(--text-muted)] uppercase font-medium">{product.Kode_Produk}</div>
                                                     </td>
                                                     <td className="px-6 py-4 text-[var(--text-secondary)] font-medium">{product.Kategori || 'Uncategorized'}</td>
-                                                    <td className="px-6 py-4 font-black text-[var(--text-primary)]">
-                                                        {formatCurrency(displayPrice)}
+                                                    <td className="px-6 py-4">
+                                                        {product.prices && product.prices.length > 0 ? (
+                                                            <div className="space-y-1.5">
+                                                                {product.prices.map((p, pi) => (
+                                                                    <div key={pi} className="flex items-center gap-2 text-xs">
+                                                                        <span className="font-black text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">{p.jenis_harga}</span>
+                                                                        {(p.min_pembelian > 1 || p.min_order > 1) && (
+                                                                            <span className="text-[10px] text-[var(--text-muted)] shrink-0">min {p.min_pembelian || p.min_order}x</span>
+                                                                        )}
+                                                                        <span className="font-bold text-[var(--text-primary)]">{formatCurrency(p.harga)}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[var(--text-muted)] text-xs">-</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
                                                         <span className={`font-bold text-[var(--text-primary)]`}>
@@ -362,17 +391,12 @@ export default function ProductsPage() {
             </Modal>
 
             {/* Toast Notification */}
-            {toast.show && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] animate-fade-in">
-                    <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md ${toast.type === 'success'
-                        ? 'bg-emerald-500/90 text-white'
-                        : 'bg-red-500/90 text-white'
-                        }`}>
-                        <span className="font-bold tracking-tight">{toast.message}</span>
-                        <button onClick={() => setToast({ ...toast, show: false })}><XMarkIcon className="w-4 h-4" /></button>
-                    </div>
-                </div>
-            )}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </MainLayout>
     );
 }

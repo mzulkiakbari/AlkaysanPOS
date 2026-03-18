@@ -156,8 +156,35 @@ export default function PaymentModal({
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Tagihan</p>
-                                <p className="text-xl font-black text-gray-800">{formatCurrency(paymentData.transaksi.total_sales)}</p>
+                                <p className="text-xl font-black text-gray-800">{formatCurrency(paymentData.transaksi.net_total_sales)}</p>
                             </div>
+                            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ongkir</p>
+                                <p className="text-xl font-black text-gray-800">{formatCurrency(paymentData.transaksi.ongkir)}</p>
+                            </div>
+                            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Diskon</p>
+                                <p className="text-xl font-black text-gray-800">{formatCurrency(paymentData.transaksi.potongan)}</p>
+                            </div>
+
+                            {/* Biaya Lain Summary Item */}
+                            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+                                <div className="absolute -right-2 -top-2 w-12 h-12 bg-primary/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Biaya Lain</p>
+                                {(() => {
+                                    const raw = paymentData.transaksi.biaya_lain || paymentData.transaksi.biaya_lain_data || [];
+                                    console.log(raw)
+                                    const items = typeof raw === 'string' ? (JSON.parse(raw) || []) : (Array.isArray(raw) ? raw : []);
+                                    const total = items.reduce((acc, b) => acc + (Number(b.nominal) || 0), 0);
+                                    return (
+                                        <>
+                                            <p className="text-xl font-black text-gray-800">{formatCurrency(total)}</p>
+                                            {items.length > 0 && <p className="text-[9px] text-primary font-bold mt-1 uppercase tracking-tight">{items.length} Detail Biaya</p>}
+                                        </>
+                                    )
+                                })()}
+                            </div>
+
                             <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm">
                                 <p className="text-[10px] font-bold text-primary/50 uppercase tracking-widest mb-1">Sudah Dibayar</p>
                                 <p className="text-xl font-black text-primary">{formatCurrency(paymentData.transaksi.total_bayar)}</p>
@@ -171,6 +198,34 @@ export default function PaymentModal({
                                 </p>
                             </div>
                         </div>
+
+                        {/* Detail Biaya Lain List */}
+                        {(() => {
+                            const raw = paymentData.transaksi.biaya_lain || paymentData.transaksi.biaya_lain_data || [];
+                            const items = typeof raw === 'string' ? (JSON.parse(raw) || []) : (Array.isArray(raw) ? raw : []);
+                            if (items.length === 0) return null;
+                            return (
+                                <div className="p-6 bg-white border border-gray-100 rounded-3xl space-y-4 shadow-sm">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <CurrencyDollarIcon className="w-4 h-4" />
+                                        Rincian Biaya Lainnya
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {items.map((b, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-primary/20 hover:bg-white transition-all">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-gray-800 uppercase tracking-tight">{b.keterangan}</span>
+                                                    <span className="text-[10px] font-bold text-primary mt-0.5">{formatCurrency(b.nominal)}</span>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full bg-gray-200/50 flex items-center justify-center text-[10px] font-black text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                                    {idx + 1}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {/* Middle Section: History & Form */}
                         <div className="grid grid-cols-1 gap-8">

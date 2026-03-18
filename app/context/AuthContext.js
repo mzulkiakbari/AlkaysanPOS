@@ -27,13 +27,8 @@ export function AuthProvider({ children }) {
 
         const userData = {
             ...profile,
-            id: profile.uniqueId,
-            name: profile.name || profile.fullname,
-            email: profile.email,
-            role: profile.isAdmin ? 'Admin' : 'Cashier',
-            isAdmin: profile.isAdmin === 1 || profile.isAdmin === true,
-            isSuperAdmin: profile.isSuperAdmin === 1 || profile.isSuperAdmin === true,
-            avatar: profile.avatar,
+            role: profile.position?.positionName || 'Cashier',
+            avatar: profile.photo_karyawan,
             pin_access: profile.pin_access,
             authorizedBranches: profile.branches || [],
         };

@@ -436,7 +436,7 @@ export default function SalesPage() {
                                                 <td className="text-xs text-center">{tx.Tanggal_Transaksi}</td>
                                                 <td className="text-center">{~~tx.total_qty}</td>
                                                 <td className="text-center">{~~tx.total_item}</td>
-                                                <td className="font-semibold text-center">{formatCurrency(tx.total_sales)}</td>
+                                                <td className="font-semibold text-center">{formatCurrency(tx.net_total_sales)}</td>
                                                 <td className="font-medium text-center">{formatCurrency(tx.total_bayar)}</td>
                                                 <td className="font-medium text-center">{formatCurrency(tx.sisa_bayar)}</td>
                                                 <td className="text-center">

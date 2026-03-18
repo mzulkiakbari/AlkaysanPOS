@@ -25,6 +25,9 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
     const isPaid = initialData?.transaksi?.Status_Bayar === 'Lunas';
     const isOnline = useNetworkStatus();
 
+    // Admins can edit products even if initialData exists. Others cannot.
+    const isReadOnlyProducts = (isPaid && (!!initialData && user?.accessProduct !== 1));
+
     // --- PAYMENT MODAL STATES ---
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [lastTransactionNo, setLastTransactionNo] = useState(null);
@@ -98,13 +101,50 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         return [];
     });
 
+    // --- SHIPPING & DISCOUNT LOGIC ---
+    const [ongkir, setOngkir] = useState(Number(initialData?.transaksi?.ongkir) || 0);
+    const [diskonType, setDiskonType] = useState('nominal');
+    const [diskonValue, setDiskonValue] = useState(Number(initialData?.transaksi?.potongan) || 0);
+
+    // --- BIAYA LAIN STATE ---
+    const [biayaLain, setBiayaLain] = useState(() => {
+        const raw = initialData?.transaksi?.biaya_lain || initialData?.transaksi?.biaya_lain_data || [];
+        if (typeof raw === 'string') {
+            try { return JSON.parse(raw); } catch (e) { return []; }
+        }
+        return Array.isArray(raw) ? raw : [];
+    });
+    const [newBiaya, setNewBiaya] = useState({ keterangan: '', nominal: '' });
+    const [isAddingBiaya, setIsAddingBiaya] = useState(false);
+
+    const handleAddBiayaLain = () => {
+        if (!newBiaya.keterangan || !newBiaya.nominal) return;
+        setBiayaLain(prev => [...prev, { keterangan: newBiaya.keterangan, nominal: Number(newBiaya.nominal) }]);
+        setNewBiaya({ keterangan: '', nominal: '' });
+        setIsAddingBiaya(false);
+    };
+
+    const handleRemoveBiayaLain = (index) => {
+        setBiayaLain(prev => prev.filter((_, i) => i !== index));
+    };
+
     // --- TOTALS CALCULATION ---
     const cartSummary = useMemo(() => {
         const subtotal = cart.reduce((acc, item) => acc + (item.total_price || 0), 0);
         const totalQty = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
         const totalItems = cart.length;
-        return { subtotal, totalQty, totalItems };
-    }, [cart]);
+
+        let diskonNominal = 0;
+        if (diskonType === 'persen') {
+            diskonNominal = (subtotal * diskonValue) / 100;
+        } else {
+            diskonNominal = Number(diskonValue) || 0;
+        }
+
+        const grandTotal = subtotal + Number(ongkir || 0) - diskonNominal + biayaLain.reduce((acc, b) => acc + (Number(b.nominal) || 0), 0);
+
+        return { subtotal, totalQty, totalItems, grandTotal, diskonNominal };
+    }, [cart, ongkir, diskonValue, diskonType, biayaLain]);
 
     // --- INITIALIZATION & DRAFT PERSISTENCE ---
     const draftKey = useMemo(() => {
@@ -126,6 +166,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                 // TAMBAHKAN INI:
                 if (parsed.selectedProduct) setSelectedProduct(parsed.selectedProduct);
                 if (parsed.itemConfig) setItemConfig(parsed.itemConfig);
+
+                if (parsed.ongkir !== undefined) setOngkir(parsed.ongkir);
+                if (parsed.diskonType !== undefined) setDiskonType(parsed.diskonType);
+                if (parsed.diskonValue !== undefined) setDiskonValue(parsed.diskonValue);
+                if (parsed.biayaLain !== undefined) setBiayaLain(parsed.biayaLain);
             }
         } catch (e) {
             console.error("Failed to load draft:", e);
@@ -145,7 +190,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                         step,
                         // TAMBAHKAN INI:
                         selectedProduct,
-                        itemConfig
+                        itemConfig,
+                        ongkir,
+                        diskonType,
+                        diskonValue,
+                        biayaLain
                     });
                     localStorage.setItem(draftKey, draftState);
                 }
@@ -438,15 +487,18 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
             isdimensi: item.isdimensi ? 1 : 0,
             distock: item.distock ? 1 : 0,
             isopen: item.isopen ? 1 : 0,
+            ongkir: Number(item.ongkir) || 0,
+            diskon: Number(item.diskon) || 0,
         }));
 
         return {
             total_qty: cartSummary.totalQty,
             total_item: cartSummary.totalItems,
             total_sales: cartSummary.subtotal,
-            biaya_lain: 0,
-            ongkir: 0,
-            diskon: 0,
+            net_total_sales: cartSummary.grandTotal,
+            biaya_lain: biayaLain,
+            ongkir: Number(ongkir) || 0,
+            diskon: cartSummary.diskonNominal,
             total_bayar: totalBayar,
             nama_pemesan: customerData.nama_pemesan,
             alamat_pemesan: customerData.alamat_pemesan || '',
@@ -465,15 +517,15 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
         const day = now.getDate().toString().padStart(2, '0');
         const dateStr = `${year}${month}${day}`;
-        
+
         // Try to get count of today's offline transactions to make a pseudo-sequence
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
-        
+
         const count = await db.pending_transactions
             .filter(t => t.created_at >= todayStart.getTime())
             .count();
-            
+
         const seq = (count + 1).toString().padStart(4, '0');
         return `${shortName}O${dateStr}${seq}`;
     };
@@ -484,17 +536,17 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         try {
             const currentPayment = Number(initialData?.transaksi?.total_bayar) || 0;
             const payload = buildPayload(currentPayment);
-            
+
             if (!isOnline) {
                 // SAVE OFFLINE to SQLite
                 const dummyNo = await generateOfflineNo();
                 payload.No_Transaksi = dummyNo;
-                
+
                 await sqlite.saveTransaction({
                     No_Transaksi: dummyNo,
                     payload
                 });
-                
+
                 showToast('Koneksi terputus. Transaksi disimpan secara offline!', 'warning');
                 setLastTransactionNo(dummyNo);
                 setShowPaymentModal(true);
@@ -520,7 +572,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
 
             const transactionNo = result.data?.No_Transaksi || result.No_Transaksi || initialData?.transaksi?.No_Transaksi;
             console.log('[TransactionForm] Using Transaction No:', transactionNo);
-            
+
             if (!transactionNo) throw new Error("Nomor transaksi tidak ditemukan.");
 
             setLastTransactionNo(transactionNo);
@@ -540,19 +592,19 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         try {
             const currentPayment = Number(initialData?.transaksi?.total_bayar) || 0;
             const payload = buildPayload(currentPayment);
-            
+
             if (!isOnline) {
                 const dummyNo = await generateOfflineNo();
                 payload.No_Transaksi = dummyNo;
-                
+
                 await sqlite.saveTransaction({
                     No_Transaksi: dummyNo,
                     payload
                 });
-                
+
                 showToast('Transaksi disimpan lokal (offline).', 'warning');
                 setLastTransactionNo(dummyNo);
-                
+
                 clearDraft();
                 setCart([]);
                 setStep(1);
@@ -701,7 +753,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                 </div>
                             </div>
                             <div className="pt-4 flex justify-end">
-                                {!isPaid && !initialData && (
+                                {!isReadOnlyProducts && (
                                     <button onClick={nextToProducts} className="btn btn-primary px-10 group h-12 rounded-xl">
                                         Pilih Produk
                                         <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -816,19 +868,19 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">Panjang (P)</label>
                                             <div className="relative">
                                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-300">{selectedProduct.Satuan}</span>
-                                                <input type="number" disabled={isPaid || initialData} value={itemConfig.p} onChange={(e) => setItemConfig(p => ({ ...p, p: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-12 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
+                                                <input type="number" disabled={isReadOnlyProducts} value={itemConfig.p} onChange={(e) => setItemConfig(p => ({ ...p, p: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-12 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">Lebar (L)</label>
                                             <div className="relative">
                                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-300">{selectedProduct.Satuan}</span>
-                                                <input type="number" disabled={isPaid || initialData} value={itemConfig.l} onChange={(e) => setItemConfig(p => ({ ...p, l: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-12 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
+                                                <input type="number" disabled={isReadOnlyProducts} value={itemConfig.l} onChange={(e) => setItemConfig(p => ({ ...p, l: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-12 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">Qty (Eks)</label>
-                                            <input type="number" disabled={isPaid || initialData} value={itemConfig.qty} onChange={(e) => setItemConfig(p => ({ ...p, qty: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
+                                            <input type="number" disabled={isReadOnlyProducts} value={itemConfig.qty} onChange={(e) => setItemConfig(p => ({ ...p, qty: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
                                         </div>
                                     </>
                                 ) : (
@@ -836,7 +888,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                         <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">Jumlah (Qty)</label>
                                         <div className="relative">
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-300 tracking-widest">{selectedProduct.Satuan}</span>
-                                            <input type="number" disabled={isPaid || initialData} value={itemConfig.qty} onChange={(e) => setItemConfig(p => ({ ...p, qty: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-16 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
+                                            <input type="number" disabled={isReadOnlyProducts} value={itemConfig.qty} onChange={(e) => setItemConfig(p => ({ ...p, qty: e.target.value }))} onWheel={(e) => e.target.blur()} className="input pl-4 pr-16 font-bold text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner" />
                                         </div>
                                     </div>
                                 )}
@@ -848,11 +900,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                         <input
                                             type="number"
                                             value={itemConfig.harga}
-                                            disabled={itemConfig.isPriceLocked || isPaid || !!initialData}
+                                            disabled={itemConfig.isPriceLocked || isReadOnlyProducts}
                                             onChange={(e) => setItemConfig(p => ({ ...p, harga: e.target.value }))}
                                             className="input !pl-12 !pr-12 font-black text-lg disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed no-spinner"
                                         />
-                                        {!isPaid && !initialData && (
+                                        {!isReadOnlyProducts && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -929,7 +981,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                     onClick={() => handleEditItem(idx)}
                                     className="group p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-red-100 transition-all relative overflow-hidden cursor-pointer active:scale-[0.98]"
                                 >
-                                    {!isPaid && !initialData && (
+                                    {!isReadOnlyProducts && (
                                         <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={(e) => {
@@ -964,13 +1016,150 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                                 <span>Subtotal</span>
                                 <span className="text-gray-900 font-bold">{formatCurrency(cartSummary.subtotal)}</span>
                             </div>
+
+                            {/* Ongkir */}
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Ongkir</label>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">Rp</div>
+                                    <input
+                                        type="number"
+                                        value={ongkir || ''}
+                                        onChange={(e) => setOngkir(e.target.value)}
+                                        placeholder="0"
+                                        className="input !pl-10 !pr-3 !py-1.5 min-h-[36px] h-auto text-right text-sm font-black text-gray-900 bg-gray-50 border border-gray-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 rounded-xl transition-all w-full no-spinner"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Diskon */}
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Diskon</label>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        {diskonType === 'nominal' && (
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">Rp</div>
+                                        )}
+                                        <input
+                                            type="number"
+                                            value={diskonValue || ''}
+                                            onChange={(e) => setDiskonValue(e.target.value)}
+                                            placeholder="0"
+                                            className={`input ${diskonType === 'nominal' ? '!pl-10' : '!pl-3'} ${diskonType === 'persen' ? '!pr-10' : '!pr-3'} !py-1.5 min-h-[36px] h-auto text-right text-sm font-black text-gray-900 bg-gray-50 border border-gray-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 rounded-xl transition-all w-full no-spinner`}
+                                        />
+                                        {diskonType === 'persen' && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">%</div>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        title={`Ubah ke ${diskonType === 'nominal' ? 'Persen' : 'Nominal'}`}
+                                        onClick={() => {
+                                            if (diskonType === 'nominal') {
+                                                setDiskonType('persen');
+                                                setDiskonValue(0);
+                                            } else {
+                                                setDiskonType('nominal');
+                                                setDiskonValue(0);
+                                            }
+                                        }}
+                                        className="min-h-[36px] px-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 font-black text-xs border border-transparent hover:border-gray-300 transition-all flex items-center justify-center shrink-0"
+                                    >
+                                        {diskonType === 'nominal' ? 'Rp' : '%'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Biaya Lain */}
+                            <div className="space-y-3 pt-2">
+                                <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">
+                                    <span>Biaya Lain</span>
+                                    {biayaLain.length > 0 && <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-md">{biayaLain.length}</span>}
+                                </div>
+
+                                {/* List Biaya Lain */}
+                                {biayaLain.length > 0 && (
+                                    <div className="space-y-2">
+                                        {biayaLain.map((b, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100 group transition-all hover:border-primary/20 hover:bg-white shadow-sm shadow-transparent hover:shadow-gray-100">
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <p className="text-[10px] font-black text-gray-800 uppercase tracking-tight truncate leading-tight">{b.keterangan}</p>
+                                                    <p className="text-[10px] font-bold text-primary mt-0.5">{formatCurrency(b.nominal)}</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveBiayaLain(idx)}
+                                                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+                                                >
+                                                    <TrashIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}                                 {/* Input Biaya Lain Toggle */}
+                                {!isAddingBiaya ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAddingBiaya(true)}
+                                        className="w-full h-9 bg-gray-50 hover:bg-white text-gray-400 hover:text-primary rounded-xl text-[10px] font-black uppercase tracking-widest border border-dashed border-gray-200 hover:border-primary/30 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <PlusIcon className="w-3.5 h-3.5" />
+                                        Tambah Biaya Lain
+                                    </button>
+                                ) : (
+                                    <div className="bg-white/50 p-3 rounded-2xl border border-dashed border-primary/20 space-y-2 animate-fade-in">
+                                        <div className="relative">
+                                            <DocumentTextIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+                                            <input
+                                                type="text" autoFocus
+                                                placeholder="Keterangan (e.g. Ongkos Pasang)"
+                                                value={newBiaya.keterangan}
+                                                onChange={(e) => setNewBiaya(prev => ({ ...prev, keterangan: e.target.value }))}
+                                                className="input !py-1.5 !pl-8 !pr-3 h-8 text-[10px] font-bold text-gray-800 bg-gray-100/50 border-none focus:bg-white focus:ring-1 focus:ring-primary/20 rounded-lg w-full placeholder:text-gray-300"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-300">Rp</div>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={newBiaya.nominal}
+                                                    onChange={(e) => setNewBiaya(prev => ({ ...prev, nominal: e.target.value }))}
+                                                    className="input !pl-7 !pr-3 !py-1.5 h-8 text-right text-[10px] font-black text-gray-900 bg-gray-100/50 border-none focus:bg-white focus:ring-1 focus:ring-primary/20 rounded-lg w-full no-spinner placeholder:text-gray-300"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleAddBiayaLain}
+                                                disabled={!newBiaya.keterangan || !newBiaya.nominal}
+                                                className="shrink-0 px-3 h-8 bg-primary hover:bg-red-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-20 flex items-center justify-center active:scale-95 shadow-lg shadow-primary/10"
+                                            >
+                                                Simpan
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddingBiaya(false)}
+                                                className="shrink-0 px-3 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center active:scale-95"
+                                            >
+                                                Batal
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex justify-between text-xs font-medium text-gray-400 uppercase tracking-widest">
                                 <span>Total Item / Qty</span>
                                 <span className="text-gray-900 font-bold">{cartSummary.totalItems} / {cartSummary.totalQty}</span>
                             </div>
                             <div className="pt-4 flex justify-between items-end">
                                 <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Total Tagihan</span>
-                                <h4 className="text-3xl font-black text-primary !leading-none tracking-tighter">{formatCurrency(cartSummary.subtotal)}</h4>
+                                <h4 className="text-3xl font-black text-primary !leading-none tracking-tighter">{formatCurrency(cartSummary.grandTotal)}</h4>
                             </div>
                         </div>
 
@@ -1046,11 +1235,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                         setCustomerData({ nama_pemesan: '', alamat_pemesan: '', telepon_pemesan: '', membership: 'UMUM' });
                         setStep(1);
                     }
-                    
+
                     if (onClose) onClose();
                 }}
                 transactionNo={lastTransactionNo}
-                totalSales={cartSummary.subtotal}
+                totalSales={cartSummary.grandTotal}
                 branch={currentBranch}
                 onSuccess={(msg) => {
                     if (msg) showToast(msg, 'success');

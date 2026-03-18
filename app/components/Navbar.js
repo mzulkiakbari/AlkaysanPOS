@@ -36,10 +36,6 @@ export default function Navbar({ onMenuClick }) {
         setIsRefreshing(false);
     };
 
-    const handleLogout = () => {
-        logout();
-    };
-
     if (!user) return null;
 
     const currentBranch = selectedBranch || branches[0];
@@ -181,23 +177,19 @@ export default function Navbar({ onMenuClick }) {
                             </div>
 
                             <div className="p-2">
-                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-main)] transition-colors text-left">
+                                <Link href="https://accounts.alkaysan.co.id" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-main)] transition-colors text-left">
                                     <UserCircleIcon className="w-5 h-5 text-[var(--text-muted)]" />
                                     <span className="text-sm text-[var(--text-primary)]">Profile</span>
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-main)] transition-colors text-left">
-                                    <Cog6ToothIcon className="w-5 h-5 text-[var(--text-muted)]" />
-                                    <span className="text-sm text-[var(--text-primary)]">Settings</span>
-                                </button>
+                                </Link>
                             </div>
                             <div className="p-2 border-t border-[var(--border)]">
-                                <button
-                                    onClick={handleLogout}
+                                <Link
+                                    href="/logout"
                                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors text-left"
                                 >
                                     <ArrowRightEndOnRectangleIcon className="w-5 h-5 text-[var(--danger)]" />
-                                    <span className="text-sm text-[var(--danger)]">Logout</span>
-                                </button>
+                                    <span className="text-sm text-[var(--danger)]">Keluar</span>
+                                </Link>
                             </div>
                         </div>
                     )}
