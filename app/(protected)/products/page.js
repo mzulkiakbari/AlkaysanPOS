@@ -73,7 +73,7 @@ export default function ProductsPage() {
         try {
             const method = selectedProduct ? 'PUT' : 'POST';
             const uri = selectedProduct
-                ? `/api/products/edit/${selectedProduct.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`
+                ? `/api/products/edit/${selectedProduct.Kode_Produk}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`
                 : `/api/products/add?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
 
             const res = await fetch(uri, {
@@ -115,7 +115,7 @@ export default function ProductsPage() {
     const handleDeleteProduct = async () => {
         setIsProcessing(true);
         try {
-            const res = await fetch(`/api/products/delete/${selectedProduct.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`, {
+            const res = await fetch(`/api/products/delete/${selectedProduct.Kode_Produk}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`, {
                 method: 'DELETE',
             });
             const result = await res.json();
