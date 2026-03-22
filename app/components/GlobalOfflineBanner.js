@@ -29,6 +29,9 @@ export default function GlobalOfflineBanner() {
         const handleOnline = () => {
             setIsOnline(true);
             fetchPendingCount();
+            setTimeout(() => {
+                setShowBanner(false);
+            }, 3000);
         };
 
         const handleOffline = () => {
