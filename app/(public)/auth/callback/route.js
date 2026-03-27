@@ -10,9 +10,7 @@ export async function GET(req) {
 
     const host = req.headers.get("host");
     const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
-    const redirectUri = isLocalhost
-        ? `http://${host}/auth/callback`
-        : process.env.NEXT_PUBLIC_REDIRECT_URI;
+    const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
 
     // exchange code → token (SERVER ONLY)
     const tokenRes = await fetch(
