@@ -9,14 +9,14 @@ export async function POST(req) {
         }
 
         // Determine which secret to use based on redirect_uri
-        const isApp = redirect_uri === 'alkaysan-pos://callback' || 
-                      redirect_uri === process.env.NEXT_PUBLIC_APP_REDIRECT_URI;
-        const clientId = isApp 
-            ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || "15")
-            : (process.env.NEXT_PUBLIC_CLIENT_ID || "14");
-        const clientSecret = isApp 
-            ? (process.env.APP_CLIENT_SECRET || "OACP34J2HWTF9EHGFCcf4SVT1qa47HPNhsFqc1hA")
-            : (process.env.CLIENT_SECRET || "7Jopgub3ewoD82KdZiNZPyAHv1iyWmSigIhip16L");
+        const isApp = redirect_uri === 'alkaysan-pos://callback' ||
+            redirect_uri === process.env.NEXT_PUBLIC_APP_REDIRECT_URI;
+        const clientId = isApp
+            ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || "")
+            : (process.env.NEXT_PUBLIC_CLIENT_ID || "");
+        const clientSecret = isApp
+            ? (process.env.APP_CLIENT_SECRET || "")
+            : (process.env.CLIENT_SECRET || "");
 
         // 1. Exchange code for token
         const payload = {
@@ -32,7 +32,7 @@ export async function POST(req) {
             payload.code_verifier = code_verifier;
         }
 
-        const tokenRes = await fetch(process.env.OAUTH_TOKEN_URL || "https://account.alkaysan.co.id/oauth/token", {
+        const tokenRes = await fetch(process.env.OAUTH_TOKEN_URL || "", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams(payload),
@@ -62,21 +62,21 @@ export async function POST(req) {
 
         // 3. Set cookies and return success
         const response = NextResponse.json({ success: true, profile });
-        
-        response.cookies.set("access_token", tokens.access_token, { 
-            httpOnly: true, 
-            secure: true, 
-            sameSite: "lax", 
+
+        response.cookies.set("access_token", tokens.access_token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
             path: "/",
             maxAge: tokens.expires_in || 3600
         });
 
         if (tokens.refresh_token) {
-            response.cookies.set("refresh_token", tokens.refresh_token, { 
-                httpOnly: true, 
-                secure: true, 
-                sameSite: "lax", 
-                path: "/" 
+            response.cookies.set("refresh_token", tokens.refresh_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "lax",
+                path: "/"
             });
         }
 

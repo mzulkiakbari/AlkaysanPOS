@@ -155,7 +155,7 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                 }
                 body {
                     background: #f3f4f6;
-                    font-family: 'Courier New', Courier, monospace;
+                    font-family: Arial;
                     display: flex;
                     justify-content: center;
                     padding: 20px;
@@ -176,11 +176,12 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
                 .text-bold { font-weight: bold; }
+                .text-bolder { font-weight: bolder; }
                 .text-uppercase { text-transform: uppercase; }
                 .text-small { font-size: 7pt; }
                 .text-normal { font-size: 8pt; }
                 .text-large { font-size: 9pt; }
-                hr { border: none; border-top: 1px dashed black; margin: 2mm 0; }
+                hr { border-color:#000000; border-style:solid; border-width:0px; border-top-width:1px; }
                 .logo-container { width: 100%; margin-bottom: 2mm; text-align: center; }
                 .logo-container svg { width: 100%; height: auto; max-height: 40px; }
                 .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; gap: 2mm; }
@@ -190,49 +191,51 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                 .item-row { display: flex; justify-content: space-between; }
                 .qr-container { margin-top: 5mm; display: flex; flex-direction: column; align-items: center; gap: 1mm; }
                 .qr-image { width: 25mm; height: 25mm; }
+                .mb-1 { margin-bottom: 1em; }
+                .mt-1 { margin-top: 1em; }
             `}</style>
 
             <div className="receipt">
-                <div className="head-container">
+                <div className="head-container mb-1">
                     <div className="logo-container" dangerouslySetInnerHTML={{ __html: storeData?.logo_svg }} />
                     <div className="text-center text-uppercase text-large text-bold">{storeName}</div>
-                    <div className="text-center text-small">{storeData?.address}</div>
-                    <div className="text-center text-small">WA : <span className="text-bold">{storeData?.phone_number}</span></div>
+                    <div className="text-center text-large">{storeData?.address}</div>
+                    <div className="text-center text-large">WA : <span className="text-bold">{storeData?.phone_number}</span></div>
                 </div>
 
                 <hr />
 
-                <div className="metadata">
+                <div className="metadata mt-1 mb-1">
                     <div className="text-normal info-row">
-                        <span className="info-label">Invoice</span>
-                        <span className="info-value text-bold">: {transaksi.No_Transaksi}</span>
+                        <span className="info-label text-large">Invoice</span>
+                        <span className="info-value text-large text-bold">: {transaksi.No_Transaksi}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">Tgl Cetak</span>
-                        <span className="info-value text-bold">: {new Date().toLocaleString('id-ID')}</span>
+                        <span className="info-label text-large">Tgl Cetak</span>
+                        <span className="info-value text-large text-bold">: {new Date().toLocaleString('id-ID')}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">Pelanggan</span>
-                        <span className="info-value text-bold">: {transaksi.nama_pemesan}</span>
+                        <span className="info-label text-large">Pelanggan</span>
+                        <span className="info-value text-large text-bold">: {transaksi.nama_pemesan}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="items">
+                <div className="items mt-1 mb-1">
                     {items && items.map((item, idx) => (
                         <div key={idx} className="item-container text-normal">
-                            <div className="text-bold">
+                            <div className="text-bold text-large">
                                 {idx + 1}. {item.No_Transaksi && `[${item.No_Transaksi}] `}{item.Nama_Produk}
                             </div>
                             {(parseFloat(item.p) > 0 || parseFloat(item.l) > 0) && (
-                                <div className="text-small">
+                                <div className="text-large">
                                     Ukuran: {parseFloat(item.p)}x{parseFloat(item.l)} {item.satuan}
                                 </div>
                             )}
                             <div className="item-row">
-                                <span>{item.Qty} x {formatCurrency(item.sales)}</span>
-                                <span className="text-bold">{formatCurrency(item.subtotal_sales)}</span>
+                                <span className="text-large">{item.Qty} x {formatCurrency(item.sales)}</span>
+                                <span className="text-bold text-large">{formatCurrency(item.subtotal_sales)}</span>
                             </div>
                         </div>
                     ))}
@@ -240,41 +243,40 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
 
                 <hr />
 
-                <div className="totals text-normal">
+                <div className="totals text-large mb-1">
                     <div className="info-row">
-                        <span>Total Qty</span>
-                        <span>{parseFloat(transaksi.total_qty)}</span>
+                        <span className="text-large">Total Qty</span>
+                        <span className="text-large">{parseFloat(transaksi.total_qty)}</span>
                     </div>
                     <hr />
-                    <div className="info-row">
-                        <span>SUBTOTAL</span>
-                        <span>{formatCurrency(transaksi.total_sales)}</span>
+                    <div className="info-row mt-1">
+                        <span className="text-large">SUBTOTAL</span>
+                        <span className="text-large">{formatCurrency(transaksi.total_sales)}</span>
                     </div>
                     {parseFloat(transaksi.potongan) > 0 && (
                         <div className="info-row">
-                            <span>DISKON</span>
-                            <span>({formatCurrency(transaksi.potongan)})</span>
+                            <span className="text-large">DISKON</span>
+                            <span className="text-large">({formatCurrency(transaksi.potongan)})</span>
                         </div>
                     )}
                     <div className="info-row text-bold text-large">
-                        <span>GRANDTOTAL</span>
-                        <span>{formatCurrency(transaksi.net_total_sales)}</span>
+                        <span className="text-large">GRANDTOTAL</span>
+                        <span className="text-large">{formatCurrency(transaksi.net_total_sales)}</span>
                     </div>
                     <div className="info-row">
-                        <span>TOTAL BAYAR</span>
-                        <span>{formatCurrency(transaksi.total_bayar)}</span>
+                        <span className="text-large">TOTAL BAYAR</span>
+                        <span className="text-large">{formatCurrency(transaksi.total_bayar)}</span>
                     </div>
                     <div className="info-row">
-                        <span>SISA</span>
-                        <span>{formatCurrency(transaksi.sisa_bayar)}</span>
+                        <span className="text-large">SISA</span>
+                        <span className="text-large">{formatCurrency(transaksi.sisa_bayar)}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="footer text-small text-center">
-                    <div>Terima Kasih Atas Kunjungan Anda</div>
-                    <div className="text-bold">STRUK GABUNGAN</div>
+                <div className="footer text-large text-center mt-1 mb-1">
+                    <div dangerouslySetInnerHTML={{ __html: storeData?.note }} />
                 </div>
             </div>
 

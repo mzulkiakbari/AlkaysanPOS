@@ -99,16 +99,16 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
         const isApp = process.env.NEXT_PUBLIC_PLATFORM === 'electron' || isElectron;
 
         const clientId = isApp
-            ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || '15')
-            : (process.env.NEXT_PUBLIC_CLIENT_ID || '14');
+            ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || '')
+            : (process.env.NEXT_PUBLIC_CLIENT_ID || '');
 
         const redirectUri = isApp
-            ? (process.env.NEXT_PUBLIC_APP_REDIRECT_URI || 'alkaysan-pos://callback')
-            : (process.env.NEXT_PUBLIC_REDIRECT_URI || 'https://demo.kasir.alkaysan.co.id/auth/callback');
+            ? (process.env.NEXT_PUBLIC_APP_REDIRECT_URI || '')
+            : (process.env.NEXT_PUBLIC_REDIRECT_URI || '');
 
         const codeChallenge = await generatePKCE();
 
-        const authorizeUrl = `https://account.alkaysan.co.id/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=*&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+        const authorizeUrl = `${process.env.OAUTH_AUTHORIZE_URL}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=*&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
         if (isElectron) {
             const { ipcRenderer } = window.require('electron');

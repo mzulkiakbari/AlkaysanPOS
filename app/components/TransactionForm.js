@@ -430,13 +430,8 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         const qty = Number(itemConfig.qty) || 1;
         const cost = itemConfig.cost || 0;
 
-        if (isDimensi) {
-            p = RoundUp(p);
-            l = RoundUp(l);
-        }
-
         const total_price = isDimensi
-            ? p * l * qty * itemConfig.harga
+            ? RoundUp(p) * RoundUp(l) * qty * itemConfig.harga
             : qty * itemConfig.harga;
 
         const newItem = {

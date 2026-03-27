@@ -25,9 +25,9 @@ export async function GET(req) {
                             method: "POST",
                             headers: { "Content-Type": "application/x-www-form-urlencoded" },
                             body: new URLSearchParams({
-                                client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "14",
-                                client_secret: process.env.CLIENT_SECRET || "7Jopgub3ewoD82KdZiNZPyAHv1iyWmSigIhip16L",
-                                redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:4200/auth/callback",
+                                client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
+                                client_secret: process.env.CLIENT_SECRET || "",
+                                redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI || "",
                                 grant_type: "refresh_token",
                                 refresh_token: refreshToken,
                             }),

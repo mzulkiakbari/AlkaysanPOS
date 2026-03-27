@@ -149,7 +149,7 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                 }
                 body {
                     background: #f3f4f6;
-                    font-family: 'Courier New', Courier, monospace;
+                    font-family: Arial;
                     display: flex;
                     justify-content: center;
                     padding: 20px;
@@ -177,15 +177,17 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
                 .text-bold { font-weight: bold; }
+                .text-bolder { font-weight: bolder; }
                 .text-uppercase { text-transform: uppercase; }
                 .text-small { font-size: 7pt; }
                 .text-normal { font-size: 8pt; }
                 .text-large { font-size: 9pt; }
                 
                 hr {
-                    border: none;
-                    border-top: 1px dashed black;
-                    margin: 2mm 0;
+                    border-color:#000000;
+                    border-style:solid;
+                    border-width:0px;
+                    border-top-width:1px;
                 }
                 .logo-container {
                     width: 100%;
@@ -222,10 +224,16 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                     width: 25mm;
                     height: 25mm;
                 }
+                .mb-1 {
+                    margin-bottom: 1em;
+                }
+                .mt-1 {
+                    margin-top: 1em;
+                }
             `}</style>
 
             <div className="receipt">
-                <div className="head-container">
+                <div className="head-container mb-1">
                     <div className="logo-container" dangerouslySetInnerHTML={{ __html: storeData?.logo_svg }} />
                     <div className="text-center text-uppercase text-large text-bold">{storeName}</div>
                     <div className="text-center text-small">{storeData?.address}</div>
@@ -235,48 +243,48 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
 
                 <hr />
 
-                <div className="metadata">
+                <div className="metadata mt-1 mb-1">
                     <div className="text-normal info-row">
-                        <span className="info-label">Invoice</span>
-                        <span className="info-value text-bold">: {transaksi.No_Transaksi}</span>
+                        <span className="info-label text-large">Invoice</span>
+                        <span className="info-value text-large text-bold">: {transaksi.No_Transaksi}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">Tgl Order</span>
-                        <span className="info-value">: {Tanggal_Transaksi || formatDateTime(transaksi.Tanggal_Transaksi)}</span>
+                        <span className="info-label text-large">Tgl Order</span>
+                        <span className="info-value text-large">: {Tanggal_Transaksi || formatDateTime(transaksi.Tanggal_Transaksi)}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">Pelanggan</span>
-                        <span className="info-value text-bold">: {transaksi.nama_pemesan}</span>
+                        <span className="info-label text-large">Pelanggan</span>
+                        <span className="info-value text-large text-bold">: {transaksi.nama_pemesan}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">HP/WA</span>
-                        <span className="info-value">: {transaksi.telepon_pemesan || '-'}</span>
+                        <span className="info-label text-large">HP/WA</span>
+                        <span className="info-value text-large">: {transaksi.telepon_pemesan || '-'}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label">Nama CS</span>
-                        <span className="info-value">: {transaksi.nama_cs || '-'}</span>
+                        <span className="info-label text-large">Nama CS</span>
+                        <span className="info-value text-large">: {transaksi.nama_cs || '-'}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="items">
+                <div className="items mt-1 mb-1">
                     {items && items.map((item, idx) => (
                         <div key={idx} className="item-container text-normal">
-                            <div className="text-bold">
+                            <div className="text-bold text-large">
                                 {idx + 1}. {item.Nama_Produk}
                             </div>
                             {(parseFloat(item.p) > 0 || parseFloat(item.l) > 0) && (
-                                <div className="text-small">
+                                <div className="text-large">
                                     Ukuran: {parseFloat(item.p)}x{parseFloat(item.l)} {item.satuan}
                                 </div>
                             )}
                             <div className="item-row">
-                                <span>{item.Qty} x {formatCurrency(item.sales)}</span>
-                                <span className="text-bold">{formatCurrency(item.subtotal_sales)}</span>
+                                <span className="text-large">{item.Qty} x {formatCurrency(item.sales)}</span>
+                                <span className="text-bold text-large">{formatCurrency(item.subtotal_sales)}</span>
                             </div>
                             {item.keterangan && (
-                                <div className="text-small italic">Ket: {item.keterangan}</div>
+                                <div className="text-large italic">Ket: {item.keterangan}</div>
                             )}
                         </div>
                     ))}
@@ -284,68 +292,68 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
 
                 <hr />
 
-                <div className="totals text-normal">
+                <div className="totals text-large mb-1">
                     <div className="info-row">
-                        <span>Total Item/Qty</span>
-                        <span>{parseFloat(transaksi.total_item)} / {parseFloat(transaksi.total_qty)}</span>
+                        <span className="text-large">Total Item/Qty</span>
+                        <span className="text-large">{parseFloat(transaksi.total_item)} / {parseFloat(transaksi.total_qty)}</span>
                     </div>
                     <hr />
-                    <div className="info-row">
-                        <span>SUBTOTAL</span>
-                        <span>{formatCurrency(transaksi.total_sales)}</span>
+                    <div className="info-row mt-1">
+                        <span className="text-large">SUBTOTAL</span>
+                        <span className="text-large">{formatCurrency(transaksi.total_sales)}</span>
                     </div>
                     {parseFloat(transaksi.ongkir) > 0 && (
                         <div className="info-row">
-                            <span>ONGKIR</span>
-                            <span>{formatCurrency(transaksi.ongkir)}</span>
+                            <span className="text-large">ONGKIR</span>
+                            <span className="text-large">{formatCurrency(transaksi.ongkir)}</span>
                         </div>
                     )}
                     {parseFloat(transaksi.potongan) > 0 && (
                         <div className="info-row">
-                            <span>DISKON</span>
-                            <span>({formatCurrency(transaksi.potongan)})</span>
+                            <span className="text-large">DISKON</span>
+                            <span className="text-large">({formatCurrency(transaksi.potongan)})</span>
                         </div>
                     )}
                     <div className="info-row text-bold text-large">
-                        <span>GRANDTOTAL</span>
-                        <span>{formatCurrency(transaksi.net_total_sales)}</span>
+                        <span className="text-large">GRANDTOTAL</span>
+                        <span className="text-large">{formatCurrency(transaksi.net_total_sales)}</span>
                     </div>
                     <div className="info-row">
-                        <span>TOTAL BAYAR</span>
-                        <span>{formatCurrency(transaksi.total_bayar)}</span>
+                        <span className="text-large">TOTAL BAYAR</span>
+                        <span className="text-large">{formatCurrency(transaksi.total_bayar)}</span>
                     </div>
                     <div className="info-row">
-                        <span>SISA</span>
-                        <span>{formatCurrency(transaksi.sisa_bayar)}</span>
+                        <span className="text-large">SISA</span>
+                        <span className="text-large">{formatCurrency(transaksi.sisa_bayar)}</span>
                     </div>
                     {parseFloat(transaksi.total_kembali) > 0 && (
                         <div className="info-row">
-                            <span>KEMBALIAN</span>
-                            <span>{formatCurrency(transaksi.total_kembali)}</span>
+                            <span className="text-large">KEMBALIAN</span>
+                            <span className="text-large">{formatCurrency(transaksi.total_kembali)}</span>
                         </div>
                     )}
                     <div className="info-row text-bold uppercase">
-                        <span>STATUS BAYAR</span>
-                        <span>{transaksi.Status_Bayar}</span>
+                        <span className="text-large">STATUS BAYAR</span>
+                        <span className="text-large">{transaksi.Status_Bayar}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="footer text-small">
+                <div className="footer text-large mt-1 mb-1">
                     <div className="info-row">
-                        <span>Kasir</span>
-                        <span>: {transaksi.nama_kasir}</span>
+                        <span className="text-large">Kasir</span>
+                        <span className="text-large">: {transaksi.nama_kasir}</span>
                     </div>
                     <div className="info-row">
-                        <span>Tgl Bayar</span>
-                        <span>: {transaksi.waktu_bayar || '-'}</span>
+                        <span className="text-large">Tgl Bayar</span>
+                        <span className="text-large">: {transaksi.waktu_bayar || '-'}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="footer-info text-center text-small">
+                <div className="footer-info text-center text-large mt-1 mb-1">
                     <div dangerouslySetInnerHTML={{ __html: storeData?.note }} />
                 </div>
             </div>

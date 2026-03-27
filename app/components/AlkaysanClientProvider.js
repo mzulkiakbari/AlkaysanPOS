@@ -11,7 +11,7 @@ export default function AlkaysanClientProvider({ children }) {
     if (typeof window !== 'undefined') {
       const isRunningInElectron = window.process && window.process.type === 'renderer';
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      
+
       if (isRunningInElectron) {
         setRedirectURI('alkaysan-pos://callback');
       } else if (isLocalhost) {
@@ -20,16 +20,16 @@ export default function AlkaysanClientProvider({ children }) {
     }
   }, []);
 
-  const isElectron = process.env.NEXT_PUBLIC_PLATFORM === 'electron' || 
-                     (typeof window !== 'undefined' && window.process && window.process.type === 'renderer');
-                     
-  const clientId = isElectron 
-    ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || "15")
-    : (process.env.NEXT_PUBLIC_CLIENT_ID || "14");
-    
+  const isElectron = process.env.NEXT_PUBLIC_PLATFORM === 'electron' ||
+    (typeof window !== 'undefined' && window.process && window.process.type === 'renderer');
+
+  const clientId = isElectron
+    ? (process.env.NEXT_PUBLIC_APP_CLIENT_ID || "")
+    : (process.env.NEXT_PUBLIC_CLIENT_ID || "");
+
   const clientSecret = isElectron
-    ? (process.env.APP_CLIENT_SECRET || "OACP34J2HWTF9EHGFCcf4SVT1qa47HPNhsFqc1hA")
-    : (process.env.CLIENT_SECRET || "7Jopgub3ewoD82KdZiNZPyAHv1iyWmSigIhip16L");
+    ? (process.env.APP_CLIENT_SECRET || "")
+    : (process.env.CLIENT_SECRET || "");
 
   return (
     <AlkaysanOAuthProvider
