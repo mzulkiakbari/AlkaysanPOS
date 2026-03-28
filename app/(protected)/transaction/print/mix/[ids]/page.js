@@ -115,6 +115,14 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
         maximumFractionDigits: 0
     }).format(val || 0);
 
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleString('id-ID', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-[var(--bg-sidebar)]">
