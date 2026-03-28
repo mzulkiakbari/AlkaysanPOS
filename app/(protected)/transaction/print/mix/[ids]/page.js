@@ -149,9 +149,17 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
         <div className="print-container">
             <style jsx global>{`
                 @media print {
-                    @page { margin: 0; size: 58mm auto; }
-                    body { margin: 0; padding: 0; }
-                    .no-print { display: none !important; }
+                    @page {
+                        margin: 0;
+                        size: 58mm auto; /* Standard thermal printer width */
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
                 }
                 body {
                     background: #f3f4f6;
@@ -161,7 +169,11 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                     padding: 20px;
                 }
                 @media print {
-                    body { background: white; display: block; padding: 0; }
+                    body {
+                        background: white;
+                        display: block;
+                        padding: 0;
+                    }
                 }
                 .receipt {
                     width: 58mm;
@@ -171,7 +183,10 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                     color: black;
                 }
                 @media print {
-                    .receipt { box-shadow: none; width: 100%; }
+                    .receipt {
+                        box-shadow: none;
+                        width: 100%;
+                    }
                 }
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
@@ -181,18 +196,54 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                 .text-small { font-size: 7pt; }
                 .text-normal { font-size: 8pt; }
                 .text-large { font-size: 9pt; }
-                hr { border-color:#000000; border-style:solid; border-width:0px; border-top-width:1px; }
-                .logo-container { width: 100%; margin-bottom: 2mm; text-align: center; }
-                .logo-container svg { width: 100%; height: auto; max-height: 40px; }
-                .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; gap: 2mm; }
+                
+                hr {
+                    border-color:#000000;
+                    border-style:solid;
+                    border-width:0px;
+                    border-top-width:1px;
+                }
+                .logo-container {
+                    width: 100%;
+                    margin-bottom: 2mm;
+                }
+                .logo-container svg {
+                    width: 100%;
+                    height: auto;
+                    max-height: 40px;
+                }
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 0.5mm;
+                }
                 .info-label { width: 35%; flex-shrink: 0; }
-                .info-value { width: 65%; text-align: right; word-break: break-all; }
-                .item-container { margin-bottom: 2mm; }
-                .item-row { display: flex; justify-content: space-between; }
-                .qr-container { margin-top: 5mm; display: flex; flex-direction: column; align-items: center; gap: 1mm; }
-                .qr-image { width: 25mm; height: 25mm; }
-                .mb-1 { margin-bottom: 1em; }
-                .mt-1 { margin-top: 1em; }
+                .info-value { width: 65%; text-align: right; }
+                
+                .item-container {
+                    margin-bottom: 2mm;
+                }
+                .item-row {
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .qr-container {
+                    margin-top: 5mm;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1mm;
+                }
+                .qr-image {
+                    width: 25mm;
+                    height: 25mm;
+                }
+                .mb-1 {
+                    margin-bottom: 1em;
+                }
+                .mt-1 {
+                    margin-top: 1em;
+                }
             `}</style>
 
             <div className="receipt">
@@ -201,6 +252,7 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                     <div className="text-center text-uppercase text-large text-bold">{storeName}</div>
                     <div className="text-center text-large">{storeData?.address}</div>
                     <div className="text-center text-large">WA : <span className="text-bold">{storeData?.phone_number}</span></div>
+                    <div className="text-center text-large">{storeData?.email}</div>
                 </div>
 
                 <hr />
@@ -211,12 +263,20 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                         <span className="info-value text-large text-bold">: {transaksi.No_Transaksi}</span>
                     </div>
                     <div className="text-normal info-row">
-                        <span className="info-label text-large">Tgl Cetak</span>
-                        <span className="info-value text-large text-bold">: {new Date().toLocaleString('id-ID')}</span>
+                        <span className="info-label text-large">Tgl Order</span>
+                        <span className="info-value text-large">: {Tanggal_Transaksi || formatDateTime(transaksi.Tanggal_Transaksi)}</span>
                     </div>
                     <div className="text-normal info-row">
                         <span className="info-label text-large">Pelanggan</span>
                         <span className="info-value text-large text-bold">: {transaksi.nama_pemesan}</span>
+                    </div>
+                    <div className="text-normal info-row">
+                        <span className="info-label text-large">HP/WA</span>
+                        <span className="info-value text-large">: {transaksi.telepon_pemesan || '-'}</span>
+                    </div>
+                    <div className="text-normal info-row">
+                        <span className="info-label text-large">Nama CS</span>
+                        <span className="info-value text-large">: {transaksi.nama_cs || '-'}</span>
                     </div>
                 </div>
 
@@ -237,6 +297,9 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                                 <span className="text-large">{item.Qty} x {formatCurrency(item.sales)}</span>
                                 <span className="text-bold text-large">{formatCurrency(item.subtotal_sales)}</span>
                             </div>
+                            {item.keterangan && (
+                                <div className="text-large italic">Ket: {item.keterangan}</div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -251,8 +314,14 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                     <hr />
                     <div className="info-row mt-1">
                         <span className="text-large">SUBTOTAL</span>
-                        <span className="text-large">{formatCurrency(transaksi.total_sales)}</span>
+                        <span className="text-large">{parseFloat(transaksi.total_sales) === 0 ? '-' : formatCurrency(transaksi.total_sales)}</span>
                     </div>
+                    {parseFloat(transaksi.ongkir) > 0 && (
+                        <div className="info-row">
+                            <span className="text-large">ONGKIR</span>
+                            <span className="text-large">{formatCurrency(transaksi.ongkir)}</span>
+                        </div>
+                    )}
                     {parseFloat(transaksi.potongan) > 0 && (
                         <div className="info-row">
                             <span className="text-large">DISKON</span>
@@ -261,21 +330,44 @@ export default function MixedTransactionPrintPage({ params: paramsPromise }) {
                     )}
                     <div className="info-row text-bold text-large">
                         <span className="text-large">GRANDTOTAL</span>
-                        <span className="text-large">{formatCurrency(transaksi.net_total_sales)}</span>
+                        <span className="text-large">{parseFloat(transaksi.net_total_sales) === 0 ? '-' : formatCurrency(transaksi.net_total_sales)}</span>
                     </div>
                     <div className="info-row">
                         <span className="text-large">TOTAL BAYAR</span>
-                        <span className="text-large">{formatCurrency(transaksi.total_bayar)}</span>
+                        <span className="text-large">{parseFloat(transaksi.total_bayar) === 0 ? '-' : formatCurrency(transaksi.total_bayar)}</span>
                     </div>
                     <div className="info-row">
                         <span className="text-large">SISA</span>
-                        <span className="text-large">{formatCurrency(transaksi.sisa_bayar)}</span>
+                        <span className="text-large">{parseFloat(transaksi.sisa_bayar) === 0 ? '-' : formatCurrency(transaksi.sisa_bayar)}</span>
+                    </div>
+                    {parseFloat(transaksi.total_kembali) > 0 && (
+                        <div className="info-row">
+                            <span className="text-large">KEMBALIAN</span>
+                            <span className="text-large">{formatCurrency(transaksi.total_kembali)}</span>
+                        </div>
+                    )}
+                    <div className="info-row text-bold uppercase">
+                        <span className="text-large">STATUS BAYAR</span>
+                        <span className="text-large">{transaksi.Status_Bayar}</span>
                     </div>
                 </div>
 
                 <hr />
 
-                <div className="footer text-large text-center mt-1 mb-1">
+                <div className="footer text-large mt-1 mb-1">
+                    <div className="info-row">
+                        <span className="text-large">Kasir</span>
+                        <span className="text-large">: {transaksi.nama_kasir}</span>
+                    </div>
+                    <div className="info-row">
+                        <span className="text-large">Tgl Bayar</span>
+                        <span className="text-large">: {transaksi.waktu_bayar || '-'}</span>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div className="footer-info text-large text-center mt-1 mb-1">
                     <div dangerouslySetInnerHTML={{ __html: storeData?.note }} />
                 </div>
             </div>

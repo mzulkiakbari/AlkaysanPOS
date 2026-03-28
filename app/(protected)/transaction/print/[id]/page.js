@@ -236,9 +236,9 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                 <div className="head-container mb-1">
                     <div className="logo-container" dangerouslySetInnerHTML={{ __html: storeData?.logo_svg }} />
                     <div className="text-center text-uppercase text-large text-bold">{storeName}</div>
-                    <div className="text-center text-small">{storeData?.address}</div>
-                    <div className="text-center text-small">WA : <span className="text-bold">{storeData?.phone_number}</span></div>
-                    <div className="text-center text-small">{storeData?.email}</div>
+                    <div className="text-center text-large">{storeData?.address}</div>
+                    <div className="text-center text-large">WA : <span className="text-bold">{storeData?.phone_number}</span></div>
+                    <div className="text-center text-large">{storeData?.email}</div>
                 </div>
 
                 <hr />
@@ -300,7 +300,7 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                     <hr />
                     <div className="info-row mt-1">
                         <span className="text-large">SUBTOTAL</span>
-                        <span className="text-large">{formatCurrency(transaksi.total_sales)}</span>
+                        <span className="text-large">{parseFloat(transaksi.total_sales) === 0 ? '-' : formatCurrency(transaksi.total_sales)}</span>
                     </div>
                     {parseFloat(transaksi.ongkir) > 0 && (
                         <div className="info-row">
@@ -316,15 +316,15 @@ export default function TransactionPrintPage({ params: paramsPromise }) {
                     )}
                     <div className="info-row text-bold text-large">
                         <span className="text-large">GRANDTOTAL</span>
-                        <span className="text-large">{formatCurrency(transaksi.net_total_sales)}</span>
+                        <span className="text-large">{parseFloat(transaksi.net_total_sales) === 0 ? '-' : formatCurrency(transaksi.net_total_sales)}</span>
                     </div>
                     <div className="info-row">
                         <span className="text-large">TOTAL BAYAR</span>
-                        <span className="text-large">{formatCurrency(transaksi.total_bayar)}</span>
+                        <span className="text-large">{parseFloat(transaksi.total_bayar) === 0 ? '-' : formatCurrency(transaksi.total_bayar)}</span>
                     </div>
                     <div className="info-row">
                         <span className="text-large">SISA</span>
-                        <span className="text-large">{formatCurrency(transaksi.sisa_bayar)}</span>
+                        <span className="text-large">{parseFloat(transaksi.sisa_bayar) === 0 ? '-' : formatCurrency(transaksi.sisa_bayar)}</span>
                     </div>
                     {parseFloat(transaksi.total_kembali) > 0 && (
                         <div className="info-row">
