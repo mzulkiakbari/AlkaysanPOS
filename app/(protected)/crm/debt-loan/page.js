@@ -534,12 +534,21 @@ export default function DebtLoanPage() {
                                             <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(inv.terbayar)}</td>
                                             <td className="px-4 py-3 text-right font-black text-red-600">{formatCurrency(inv.sisa)}</td>
                                             <td className="px-4 py-3 text-center">
-                                                <button
-                                                    onClick={() => handlePayInvoice(inv)}
-                                                    className="px-3 py-1 rounded-lg bg-[var(--primary)] text-white text-[10px] font-bold uppercase tracking-wider hover:scale-105 transition-all"
-                                                >
-                                                    Bayar
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => window.open(`/transaction/print/${inv.no_transaksi}`, '_blank')}
+                                                        className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider hover:bg-gray-200 transition-all flex items-center gap-1"
+                                                    >
+                                                        <EyeIcon className="w-3 h-3" />
+                                                        Lihat
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handlePayInvoice(inv)}
+                                                        className="px-3 py-1 rounded-lg bg-[var(--primary)] text-white text-[10px] font-bold uppercase tracking-wider hover:scale-105 transition-all"
+                                                    >
+                                                        Bayar
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
