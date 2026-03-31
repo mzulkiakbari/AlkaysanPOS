@@ -108,9 +108,12 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
 
     // --- BIAYA LAIN STATE ---
     const [biayaLain, setBiayaLain] = useState(() => {
-        const raw = initialData?.transaksi?.biaya_lain || initialData?.transaksi?.biaya_lain_data || [];
+        const raw = initialData?.transaksi?.biaya_lain ?? initialData?.transaksi?.biaya_lain_data ?? [];
         if (typeof raw === 'string') {
             try { return JSON.parse(raw); } catch (e) { return []; }
+        }
+        if (typeof raw === 'number' || !raw) {
+            return [];
         }
         return Array.isArray(raw) ? raw : [];
     });
@@ -141,7 +144,9 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
             diskonNominal = Number(diskonValue) || 0;
         }
 
-        const grandTotal = subtotal + Number(ongkir || 0) - diskonNominal + biayaLain.reduce((acc, b) => acc + (Number(b.nominal) || 0), 0);
+        const tambahanBiaya = (Array.isArray(biayaLain) ? biayaLain : []).reduce((acc, b) => acc + (Number(b.nominal) || 0), 0);
+
+        const grandTotal = subtotal + Number(ongkir || 0) - diskonNominal + tambahanBiaya;
 
         return { subtotal, totalQty, totalItems, grandTotal, diskonNominal };
     }, [cart, ongkir, diskonValue, diskonType, biayaLain]);
