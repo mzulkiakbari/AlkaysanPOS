@@ -23,7 +23,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { FetchData } from '../../hooks/useFetchData';
 import { useNetworkStatus } from '../../../hooks/useNetworkStatus';
-import { sqlite } from '../../../lib/sqlite-client';
+// sqlite removed
 import { GetLocalDate } from '../../hooks/useHelpers';
 import PaymentModal from '../../components/PaymentModal';
 import MergeTransactionModal from '../../components/MergeTransactionModal';
@@ -96,9 +96,16 @@ export default function SalesPage() {
             setIsLoading(true);
 
             if (!isOnline) {
-                console.log('[SalesPage] Offline: fetching pending transactions from SQLite...');
-                const pending = await sqlite.getPendingTransactions();
-                setTransactions(pending);
+                console.log('[SalesPage] Offline: fetching pending transactions from local API...');
+                try {
+                    const res = await fetch('/api/transactions/local');
+                    const localData = await res.json();
+                    if (localData.success) {
+                        setTransactions(localData.data.data);
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch local transactions', e);
+                }
                 setPagination({ current_page: 1, last_page: 1 });
                 setIsLoading(false);
                 return;

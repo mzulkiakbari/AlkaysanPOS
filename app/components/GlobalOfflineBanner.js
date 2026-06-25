@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { WifiIcon } from '@heroicons/react/24/solid';
-import { sqlite } from '../../lib/sqlite-client';
-
 export default function GlobalOfflineBanner() {
     const [isOnline, setIsOnline] = useState(true);
     const [showBanner, setShowBanner] = useState(false);
@@ -18,12 +16,8 @@ export default function GlobalOfflineBanner() {
         }
 
         const fetchPendingCount = async () => {
-            try {
-                const pending = await sqlite.getPendingTransactions();
-                setSyncCount(pending.length);
-            } catch (err) {
-                console.error('Failed to fetch pending count', err);
-            }
+            // Disabled: Sync is now handled by API and SyncIndicator
+            setSyncCount(0);
         };
 
         const handleOnline = () => {

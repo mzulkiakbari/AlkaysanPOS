@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { saveLocalTransaction } from '@/lib/mysql';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,8 @@ async function handleRequest(req, params, method) {
         }
     }
 
+    const isSaveAction = (method === 'POST' || method === 'PUT') && (actionPath === 'add' || actionPath.startsWith('edit/'));
+
     const fetchBackend = async (token) => {
         const baseUrl = String(process.env.NEXT_PUBLIC_API_BASE_URL || "").trim();
         let targetUrl = `${baseUrl}/${shortName.toLowerCase()}/${uniqueId}/api/v2/transactions/${actionPath}`;
@@ -79,6 +82,22 @@ async function handleRequest(req, params, method) {
 
         if (body) {
             options.body = JSON.stringify(body);
+        }
+
+        // Add 10s timeout for save actions to trigger offline fallback
+        if (isSaveAction) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            options.signal = controller.signal;
+
+            try {
+                const res = await fetch(targetUrl, options);
+                clearTimeout(timeoutId);
+                return res;
+            } catch (err) {
+                clearTimeout(timeoutId);
+                throw err;
+            }
         }
 
         return fetch(targetUrl, options);
@@ -114,6 +133,8 @@ async function handleRequest(req, params, method) {
                                 res.cookies.set("refresh_token", token.refresh_token, { httpOnly: true, secure: true, sameSite: "lax", path: "/" });
                             }
                             return res;
+                        } else {
+                            response = retryRes; // Set the retried response so it falls into the error handler below
                         }
                     }
                 } catch (refreshErr) {
@@ -123,9 +144,15 @@ async function handleRequest(req, params, method) {
         }
 
         if (!response.ok) {
+            // If server is down/slow and it's a save action, throw to trigger fallback
+            if (response.status >= 500 && isSaveAction && body) {
+                throw new Error(`Server returned ${response.status}. Triggering local fallback.`);
+            }
+
             const errorResult = await response.json().catch(() => ({}));
             return NextResponse.json({
                 ok: false,
+                success: false,
                 message: errorResult.message || `Failed to ${actionPath} transaction data.`
             }, { status: response.status });
         }
@@ -133,7 +160,34 @@ async function handleRequest(req, params, method) {
         const result = await response.json();
         return NextResponse.json(result);
     } catch (error) {
-        console.error(`Transaction Proxy ${actionPath} Error:`, error);
-        return NextResponse.json({ ok: false, message: 'Internal server error', error: error.message }, { status: 500 });
+        console.error(`Transaction Proxy ${actionPath} Error:`, error.message);
+
+        const requestHost = req.headers.get('host') || '';
+        const isLocalNode = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
+
+        // OFFLINE FALLBACK
+        if (isSaveAction && body && isLocalNode) {
+            console.log('Network/Timeout/Server error. Falling back to LOCAL MYSQL...');
+            try {
+                // If it doesn't have a transaction number yet (e.g., from 'add'), generate one
+                if (!body.No_Transaksi) {
+                    body.No_Transaksi = 'OFF-' + Date.now();
+                }
+
+                const localRes = await saveLocalTransaction(body, false);
+                return NextResponse.json({
+                    ok: true,
+                    success: true,
+                    message: 'Koneksi lambat/terputus. Transaksi disimpan ke lokal!',
+                    data: { No_Transaksi: localRes.No_Transaksi },
+                    isLocal: true
+                });
+            } catch (localError) {
+                console.error('Local Fallback Error:', localError);
+                return NextResponse.json({ ok: false, success: false, message: 'Gagal menyimpan ke server dan ke database lokal.', error: localError.message }, { status: 500 });
+            }
+        }
+
+        return NextResponse.json({ ok: false, success: false, message: 'Internal server error', error: error.message }, { status: 500 });
     }
 }
