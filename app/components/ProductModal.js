@@ -34,13 +34,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
     const [isAutoCode, setIsAutoCode] = useState(true);
     const [showCategorySelector, setShowCategorySelector] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchMetadata();
-        }
-    }, [isOpen]);
-
-    const fetchMetadata = async () => {
+    async function fetchMetadata() {
         if (!isOpen) return;
         try {
             // Get current branch from localStorage if not available from context (safeguard)
@@ -75,7 +69,13 @@ export default function ProductModal({ isOpen, onClose, product, onSave, categor
             console.error('Error fetching metadata:', error);
             setPriceLabels(['UMUM']);
         }
-    };
+    }
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMetadata();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (product) {

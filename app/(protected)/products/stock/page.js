@@ -32,14 +32,7 @@ export default function StockPage() {
     const [showFormModal, setShowFormModal] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    useEffect(() => {
-        if (currentBranch) {
-            fetchActivities();
-            fetchProducts();
-        }
-    }, [currentBranch, search, pagination.page]);
-
-    const fetchActivities = async () => {
+    async function fetchActivities() {
         if (!currentBranch) return;
         try {
             setIsLoading(true);
@@ -63,9 +56,9 @@ export default function StockPage() {
             console.error('Error fetching stock activities:', error);
             setIsLoading(false);
         }
-    };
+    }
 
-    const fetchProducts = async () => {
+    async function fetchProducts() {
         if (!currentBranch) return;
         try {
             const result = await FetchData({
@@ -78,7 +71,14 @@ export default function StockPage() {
         } catch (error) {
             console.error('Error fetching products:', error);
         }
-    };
+    }
+
+    useEffect(() => {
+        if (currentBranch) {
+            fetchActivities();
+            fetchProducts();
+        }
+    }, [currentBranch, search, pagination.page]);
 
     const handleSaveStock = async (data) => {
         try {
