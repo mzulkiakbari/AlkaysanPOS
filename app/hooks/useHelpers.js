@@ -5,7 +5,7 @@ export const getRefreshToken = async (credential) => {
     try {
         const responseRefreshToken = await FetchData({
             method: 'POST',
-            uri: 'https://account.alkaysan.co.id/oauth/token',
+            uri: 'https://account.alkaysan.com/oauth/token',
             data: {
                 'grant_type': 'refresh_token',
                 'refresh_token': credential.credential?.data?.refresh_token,

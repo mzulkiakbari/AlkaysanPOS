@@ -11,7 +11,7 @@ export async function GET(req) {
     }
 
     const fetchBranches = async (token) => {
-        return fetch('https://api.alkaysan.co.id/v2/store/store/get/all?orderBy=storeName&sortBy=asc', {
+        return fetch('https://api.alkaysan.com/v2/store/store/get/all?orderBy=storeName&sortBy=asc', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
@@ -27,7 +27,7 @@ export async function GET(req) {
             const refreshToken = req.cookies.get('refresh_token')?.value;
             if (refreshToken) {
                 try {
-                    const tokenRes = await fetch("https://account.alkaysan.co.id/oauth/token", {
+                    const tokenRes = await fetch("https://account.alkaysan.com/oauth/token", {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
                         body: new URLSearchParams({

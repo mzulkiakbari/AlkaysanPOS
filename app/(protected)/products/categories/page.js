@@ -34,19 +34,29 @@ export default function CategoriesPage() {
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const handleSaveCategory = async (data) => {
+        if (!selectedCategory) return;
         setIsProcessing(true);
         try {
-            const action = selectedCategory ? 'update' : 'create';
-            const uri = selectedCategory
-                ? `/api/categories/update/${selectedCategory.id}?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`
-                : `/api/categories/create?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
+            const uri = `/api/categories/edit?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
+            
+            const payload = {
+                old_category: selectedCategory.Kategori,
+                new_category: data.Kategori
+            };
 
-            console.log(`${action} category:`, data);
+            const result = await FetchData({
+                method: 'PUT',
+                uri,
+                body: payload
+            });
 
-            // Mock success
-            setToast({ show: true, message: `Kategori berhasil ${selectedCategory ? 'diperbarui' : 'ditambahkan'}`, type: 'success' });
-            setShowFormModal(false);
-            fetchCategories(pagination.page);
+            if (result && result.success) {
+                setToast({ show: true, message: 'Kategori berhasil diperbarui', type: 'success' });
+                setShowFormModal(false);
+                fetchCategories(pagination.page);
+            } else {
+                setToast({ show: true, message: result?.message || 'Gagal menyimpan kategori', type: 'error' });
+            }
         } catch (error) {
             console.error('Error saving category:', error);
             setToast({ show: true, message: 'Gagal menyimpan kategori', type: 'error' });
@@ -58,11 +68,21 @@ export default function CategoriesPage() {
     const handleDeleteCategory = async () => {
         setIsProcessing(true);
         try {
-            console.log('Deleting category:', selectedCategory.id);
-            // Mock success
-            setToast({ show: true, message: 'Kategori berhasil dihapus', type: 'success' });
-            setShowDeleteModal(false);
-            fetchCategories(pagination.page);
+            const uri = `/api/categories/delete?shortName=${currentBranch.storeData.short_name}&uniqueId=${currentBranch.uniqueId}`;
+            
+            const result = await FetchData({
+                method: 'DELETE',
+                uri,
+                body: { category: selectedCategory.Kategori }
+            });
+
+            if (result && result.success) {
+                setToast({ show: true, message: 'Kategori berhasil dihapus (dikosongkan)', type: 'success' });
+                setShowDeleteModal(false);
+                fetchCategories(pagination.page);
+            } else {
+                setToast({ show: true, message: result?.message || 'Gagal menghapus kategori', type: 'error' });
+            }
         } catch (error) {
             console.error('Error deleting category:', error);
             setToast({ show: true, message: 'Gagal menghapus kategori', type: 'error' });
@@ -144,13 +164,6 @@ export default function CategoriesPage() {
                         <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Kategori Produk</h1>
                         <p className="text-[var(--text-secondary)] text-sm">Kelola kelompok produk Anda di <span className="text-[var(--primary)] font-bold">{currentBranch?.storeName}</span></p>
                     </div>
-                    <button
-                        onClick={() => { setSelectedCategory(null); setShowFormModal(true); }}
-                        className="btn btn-primary h-12 px-6 rounded-2xl shadow-lg shadow-[var(--primary)]/20 hover:scale-105 active:scale-95 transition-all"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                        <span>Tambah Kategori</span>
-                    </button>
                 </div>
 
                 {/* Filters & Stats */}

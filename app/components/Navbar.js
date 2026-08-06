@@ -177,7 +177,7 @@ export default function Navbar({ onMenuClick }) {
                             </div>
 
                             <div className="p-2">
-                                <Link href="https://accounts.alkaysan.co.id" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-main)] transition-colors text-left">
+                                <Link href="https://accounts.alkaysan.com" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-main)] transition-colors text-left">
                                     <UserCircleIcon className="w-5 h-5 text-[var(--text-muted)]" />
                                     <span className="text-sm text-[var(--text-primary)]">Profile</span>
                                 </Link>

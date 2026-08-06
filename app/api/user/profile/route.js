@@ -8,7 +8,7 @@ export async function GET(req) {
     }
 
     try {
-        const response = await fetch('https://account.alkaysan.co.id/api/v1/user/get/me', {
+        const response = await fetch('https://account.alkaysan.com/api/v1/user/get/me', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/json'
@@ -21,7 +21,7 @@ export async function GET(req) {
                 const refreshToken = req.cookies.get('refresh_token')?.value;
                 if (refreshToken) {
                     try {
-                        const tokenRes = await fetch("https://account.alkaysan.co.id/oauth/token", {
+                        const tokenRes = await fetch("https://account.alkaysan.com/oauth/token", {
                             method: "POST",
                             headers: { "Content-Type": "application/x-www-form-urlencoded" },
                             body: new URLSearchParams({
@@ -36,7 +36,7 @@ export async function GET(req) {
                         if (tokenRes.ok) {
                             const token = await tokenRes.json();
                             // Retry profile fetch with new token
-                            const retryRes = await fetch('https://account.alkaysan.co.id/api/v1/user/get/me', {
+                            const retryRes = await fetch('https://account.alkaysan.com/api/v1/user/get/me', {
                                 headers: {
                                     'Authorization': `Bearer ${token.access_token}`,
                                     'Accept': 'application/json'

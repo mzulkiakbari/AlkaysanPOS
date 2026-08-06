@@ -118,7 +118,7 @@ export const getProfile = async (accessToken) => {
     try {
         const response = await FetchData({
             method: 'GET',
-            uri: 'https://api.alkaysan.co.id/v2/account/user/get/me',
+            uri: 'https://api.alkaysan.com/v2/account/user/get/me',
             hasToken: accessToken && accessToken
         });
 

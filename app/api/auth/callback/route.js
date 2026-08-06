@@ -47,7 +47,7 @@ export async function POST(req) {
         const tokens = await tokenRes.json();
 
         // 2. Fetch user profile
-        const profileRes = await fetch('https://account.alkaysan.co.id/api/v1/user/get/me', {
+        const profileRes = await fetch('https://account.alkaysan.com/api/v1/user/get/me', {
             headers: {
                 'Authorization': `Bearer ${tokens.access_token}`,
                 'Accept': 'application/json'

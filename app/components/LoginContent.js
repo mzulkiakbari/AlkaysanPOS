@@ -222,7 +222,7 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
                                 onClick={handleExternalLogin}
                                 className="btn btn-primary w-full h-14 rounded-full font-bold flex items-center justify-center gap-2"
                             >
-                                <img src="https://account.alkaysan.co.id/favicon.ico" alt="Alkaysan" className="w-6 h-6 rounded-full" />
+                                <img src="https://account.alkaysan.com/favicon.ico" alt="Alkaysan" className="w-6 h-6 rounded-full" />
                                 Masuk dengan Alkaysan
                             </button>
                         ) : (

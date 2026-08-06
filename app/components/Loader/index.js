@@ -49,7 +49,7 @@ export function CatLoader({ text = '', loading = "100%" }) {
                             <Image
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" alt="Ball yarn"
                               fill
-                              src="https://cdn.alkaysan.co.id/file/VEhmelNObk0xT1Nn"
+                              src="https://cdn.alkaysan.com/file/VEhmelNObk0xT1Nn"
                             />
                           </div>
                         </div>
@@ -66,7 +66,7 @@ export function CatLoader({ text = '', loading = "100%" }) {
           <Image
             fill
             alt="cat"
-            src="https://cdn.alkaysan.co.id/file/RDl1aUdMWWw1a1Ja"
+            src="https://cdn.alkaysan.com/file/RDl1aUdMWWw1a1Ja"
             sizes="100vw"
             objectFit="contain"
           />

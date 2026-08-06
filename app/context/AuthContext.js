@@ -121,7 +121,7 @@ export function AuthProvider({ children }) {
 
     const logout = useCallback(() => {
         const callbackUrl = `${window.location.origin}/callback/logout`;
-        const logoutUrl = `https://account.alkaysan.co.id/oauth/logout?callback=${encodeURIComponent(callbackUrl)}`;
+        const logoutUrl = `https://account.alkaysan.com/oauth/logout?callback=${encodeURIComponent(callbackUrl)}`;
         window.location.href = logoutUrl;
     }, []);
 
