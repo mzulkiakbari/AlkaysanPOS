@@ -4,7 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import AlkaysanClientProvider from "./components/AlkaysanClientProvider";
 import SessionWrapper from "./components/SessionWrapper";
 import GlobalOfflineBanner from "./components/GlobalOfflineBanner";
-import SyncService from "./components/SyncService";
+
 
 
 // Use local fonts or handle build-time fetch issues
@@ -50,7 +50,7 @@ export default function RootLayout({ children }) {
               {children}
             </SessionWrapper>
             <GlobalOfflineBanner />
-            <SyncService />
+
           </AuthProvider>
         </AlkaysanClientProvider>
       </body>

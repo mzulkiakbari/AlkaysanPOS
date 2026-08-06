@@ -81,7 +81,16 @@ export function AuthProvider({ children }) {
         }
 
         try {
-            const res = await fetch('/api/user/profile', { cache: 'no-store' });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 detik timeout
+
+            const res = await fetch('/api/user/profile', { 
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+
             if (res.status === 401) {
                 const fullPath = window.location.pathname + window.location.search;
                 logoutLocal();
@@ -104,12 +113,12 @@ export function AuthProvider({ children }) {
                 return userData;
             }
         } catch (error) {
-            // Jika fetch error (misal timeout saat offline terdeteksi terlambat),
+            // Jika fetch error (misal timeout saat offline terdeteksi terlambat atau lambat),
             // fallback ke localStorage agar app tetap bisa berjalan
             console.error('Failed to fetch session profile:', error);
             const storedUser = localStorage.getItem('pos_user');
             if (storedUser) {
-                console.warn('[AuthContext] Using cached user data due to fetch error.');
+                console.warn('[AuthContext] Using cached user data due to fetch error/timeout.');
                 const parsed = JSON.parse(storedUser);
                 setUser(parsed);
                 return parsed;
@@ -131,13 +140,12 @@ export function AuthProvider({ children }) {
             const storedBranch = localStorage.getItem('pos_branch');
             const storedBranches = localStorage.getItem('pos_branches');
 
+            let hasCache = false;
+
             if (storedUser) {
                 setUser(JSON.parse(storedUser));
+                hasCache = true;
             }
-
-            // Always fetch fresh profile to sync with SSO
-            // This runs in background and updates state + localStorage if successful
-            await fetchProfile();
 
             if (storedBranch) {
                 setSelectedBranch(JSON.parse(storedBranch));
@@ -148,7 +156,17 @@ export function AuthProvider({ children }) {
                 const filteredBranches = parsedBranches.filter(b => b.isActive === 1);
                 setBranches(filteredBranches);
             }
-            setIsLoading(false);
+
+            if (hasCache) {
+                // Mempercepat masuk ke aplikasi jika sudah ada cache
+                setIsLoading(false);
+                // Background update tanpa ditunggu
+                fetchProfile().catch(console.error);
+            } else {
+                // Tunggu fetch jika belum pernah login / tidak ada cache
+                await fetchProfile();
+                setIsLoading(false);
+            }
         };
 
         initializeAuth();

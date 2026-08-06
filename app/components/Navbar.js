@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { useAuth } from '../context/AuthContext';
+import SyncIndicator from './SyncIndicator';
 
 export default function Navbar({ onMenuClick }) {
     const { user, selectedBranch, branches, switchBranch, logout, fetchBranches } = useAuth();
@@ -134,6 +135,8 @@ export default function Navbar({ onMenuClick }) {
 
             {/* Right Section */}
             <div className="flex items-center gap-3">
+                <SyncIndicator />
+
                 {/* Add Transaction Button */}
                 <Link href="/transaction/add" className="btn btn-primary px-3 md:px-5">
                     <PlusIcon className="w-4 h-4" />

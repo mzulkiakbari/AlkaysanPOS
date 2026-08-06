@@ -23,13 +23,7 @@ export default function LowStockPage() {
     const [lowStockProducts, setLowStockProducts] = useState([]);
     const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        if (currentBranch) {
-            fetchLowStock();
-        }
-    }, [currentBranch, search]);
-
-    const fetchLowStock = async () => {
+    async function fetchLowStock() {
         if (!currentBranch) return;
         try {
             setIsLoading(true);
@@ -52,7 +46,13 @@ export default function LowStockPage() {
             console.error('Error fetching low stock:', error);
             setIsLoading(false);
         }
-    };
+    }
+
+    useEffect(() => {
+        if (currentBranch) {
+            fetchLowStock();
+        }
+    }, [currentBranch, search]);
 
     return (
         <MainLayout>

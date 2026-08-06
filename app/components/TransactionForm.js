@@ -16,7 +16,7 @@ import Toast from './Toast';
 import { RoundUp } from '../hooks/useHelpers';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { db } from '../../lib/db';
-import { sqlite } from '../../lib/sqlite-client';
+// sqlite removed
 
 export default function TransactionForm({ onClose, onStepChange, initialData = null }) {
     const router = useRouter();
@@ -226,21 +226,16 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         setIsLoadingProducts(true);
         setProductsError(null);
         try {
-            // ALWAYS check SQLite first or if offline
+            let endpoint = '';
+            
             if (!isOnline) {
-                console.log('[TransactionForm] Fetching products from SQLite (Offline mode)...');
-                const localProducts = await sqlite.searchItems(productSearch || '');
-                setProducts(localProducts);
-                setProductPagination(prev => ({
-                    ...prev,
-                    last_page: 1,
-                    total: localProducts.length
-                }));
-                setIsLoadingProducts(false);
-                return;
+                console.log('[TransactionForm] Offline mode - fetching products from local DB...');
+                endpoint = '/api/products/local';
+            } else {
+                const action = productSearch ? 'search' : 'getAll';
+                endpoint = `/api/products/${action}`;
             }
 
-            const action = productSearch ? 'search' : 'getAll';
             const queryParams = new URLSearchParams({
                 shortName: currentBranch.storeData.short_name,
                 uniqueId: currentBranch.uniqueId,
@@ -249,7 +244,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                 ...(productSearch && { v: productSearch })
             });
 
-            const res = await fetch(`/api/products/${action}?${queryParams.toString()}`);
+            const res = await fetch(`${endpoint}?${queryParams.toString()}`);
             const results = await res.json();
 
             if (results.success) {
@@ -263,11 +258,8 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                 throw new Error(results.message || 'Gagal memuat produk');
             }
         } catch (error) {
-            console.error('[TransactionForm] Failed to fetch products, falling back to SQLite:', error);
-            // Fallback to SQLite on error
-            const localProducts = await sqlite.searchItems(productSearch || '');
-            setProducts(localProducts);
-        } finally {
+            // Fallback removed
+            setProducts([]);
             setIsLoadingProducts(false);
         }
     }, [currentBranch, productPagination.current_page, productSearch, isOnline]);
@@ -537,22 +529,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
             const currentPayment = Number(initialData?.transaksi?.total_bayar) || 0;
             const payload = buildPayload(currentPayment);
 
-            if (!isOnline) {
-                // SAVE OFFLINE to SQLite
-                const dummyNo = await generateOfflineNo();
-                payload.No_Transaksi = dummyNo;
-
-                await sqlite.saveTransaction({
-                    No_Transaksi: dummyNo,
-                    payload
-                });
-
-                showToast('Koneksi terputus. Transaksi disimpan secara offline!', 'warning');
-                setLastTransactionNo(dummyNo);
-                setShowPaymentModal(true);
-                clearDraft();
-                return;
-            }
+            // Offline fallback is now handled by the Next.js API proxy
 
             const action = initialData ? `edit/${initialData.transaksi.No_Transaksi}` : 'add';
             const method = initialData ? 'PUT' : 'POST';
@@ -575,6 +552,10 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
 
             if (!transactionNo) throw new Error("Nomor transaksi tidak ditemukan.");
 
+            if (result.isLocal) {
+                showToast('Koneksi terputus. Transaksi disimpan secara offline!', 'warning');
+            }
+            
             setLastTransactionNo(transactionNo);
             setShowPaymentModal(true);
             clearDraft();
@@ -593,24 +574,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
             const currentPayment = Number(initialData?.transaksi?.total_bayar) || 0;
             const payload = buildPayload(currentPayment);
 
-            if (!isOnline) {
-                const dummyNo = await generateOfflineNo();
-                payload.No_Transaksi = dummyNo;
-
-                await sqlite.saveTransaction({
-                    No_Transaksi: dummyNo,
-                    payload
-                });
-
-                showToast('Transaksi disimpan lokal (offline).', 'warning');
-                setLastTransactionNo(dummyNo);
-
-                clearDraft();
-                setCart([]);
-                setStep(1);
-                if (onClose) onClose();
-                return;
-            }
+            // Offline fallback is now handled by the Next.js API proxy
 
             const action = initialData ? `edit/${initialData.transaksi.No_Transaksi}` : 'add';
             const method = initialData ? 'PUT' : 'POST';
@@ -631,7 +595,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                 const transactionNo = result.data?.No_Transaksi || result.No_Transaksi;
                 if (transactionNo) {
                     setLastTransactionNo(transactionNo);
-                    showToast(`Transaksi berhasil disimpan!`, 'success');
+                    if (result.isLocal) {
+                        showToast(`Transaksi disimpan secara offline!`, 'warning');
+                    } else {
+                        showToast(`Transaksi berhasil disimpan!`, 'success');
+                    }
                     setTimeout(() => {
                         router.push(`/transaction/edit/${transactionNo}`);
                     }, 1500);
@@ -641,7 +609,11 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
                 setCart([]);
                 setStep(1);
             } else {
-                showToast(`Transaksi diperbarui!`, 'success');
+                if (result.isLocal) {
+                    showToast(`Transaksi disimpan secara offline!`, 'warning');
+                } else {
+                    showToast(`Transaksi diperbarui!`, 'success');
+                }
             }
             if (onClose) onClose();
         } catch (error) {

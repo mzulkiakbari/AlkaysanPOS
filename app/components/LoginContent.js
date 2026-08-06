@@ -17,6 +17,41 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
     }, [isLoadingOverride]);
 
     useEffect(() => {
+        const handleAuthSync = (event) => {
+            // Pastikan pesan hanya diterima dari domain asli kita
+            if (event.origin !== 'https://kasir.alkaysan.co.id') return;
+
+            if (event.data?.type === 'ALKAYSAN_AUTH_SYNC' && event.data?.data) {
+                const { localStorage: lsData, cookies } = event.data.data;
+                
+                // Hanya sinkronkan jika ada tanda-tanda sudah login (ada data user/token)
+                if (lsData['user'] || lsData['selectedBranch'] || lsData['token']) {
+                    console.log('🔄 Menerima sesi login dari kasir.alkaysan.co.id');
+                    setIsLoading(true);
+
+                    // Pindahkan LocalStorage
+                    Object.keys(lsData).forEach(key => {
+                        localStorage.setItem(key, lsData[key]);
+                    });
+                    
+                    // Pindahkan Cookies
+                    if (cookies) {
+                        cookies.split(';').forEach(cookie => {
+                            document.cookie = cookie.trim();
+                        });
+                    }
+                    
+                    // Refresh halaman untuk menerapkan sesi
+                    window.location.href = '/';
+                }
+            }
+        };
+
+        window.addEventListener('message', handleAuthSync);
+        return () => window.removeEventListener('message', handleAuthSync);
+    }, []);
+
+    useEffect(() => {
         // Detect if running inside Electron
         const isRunningInElectron = typeof window !== 'undefined' &&
             window.process &&
@@ -136,6 +171,13 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
 
     return (
         <div className="min-h-screen flex">
+            {/* Hidden Iframe untuk Auto-Sync Sesi Login */}
+            <iframe 
+                src="https://kasir.alkaysan.co.id/sync-auth" 
+                style={{ display: 'none' }} 
+                title="Auth Auto-Sync"
+            />
+
             {/* Left Side - Branding */}
             {withBranding && (
                 <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[var(--bg-sidebar)] via-[var(--primary-dark)] to-[var(--primary)] relative overflow-hidden">

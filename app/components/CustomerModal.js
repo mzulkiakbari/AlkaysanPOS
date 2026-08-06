@@ -24,13 +24,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
     const [membershipOptions, setMembershipOptions] = useState(['UMUM']);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchMetadata();
-        }
-    }, [isOpen]);
-
-    const fetchMetadata = async () => {
+    async function fetchMetadata() {
         try {
             let branchInfo = null;
             try {
@@ -54,7 +48,13 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
         } catch (error) {
             console.error('Error fetching membership labels:', error);
         }
-    };
+    }
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMetadata();
+        }
+    }, [isOpen]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

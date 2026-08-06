@@ -30,6 +30,32 @@ export default function SessionWrapper({ children }) {
         }
     }, [isSleeping]);
 
+    function handleUnlock(e) {
+        if (e && e.preventDefault) e.preventDefault();
+
+        // Decode pin_access from user data (encoded with btoa)
+        let correctPin = '123456'; // Default fallback if pin_access is missing
+        if (user && user.pin_access) {
+            try {
+                correctPin = atob(user.pin_access);
+            } catch (err) {
+                console.error('Failed to decode PIN:', err);
+            }
+        }
+
+        if (pin === correctPin) {
+            setIsSleeping(false);
+            setPin('');
+            setError('');
+            resetTimer();
+        } else {
+            setError('PIN salah. Coba lagi.');
+            setPin('');
+            // Refocus after clear
+            setTimeout(() => inputRef.current?.focus(), 10);
+        }
+    }
+
     useEffect(() => {
         if (pin.length === 6) {
             // Simulasi event untuk handleUnlock
@@ -56,32 +82,6 @@ export default function SessionWrapper({ children }) {
             events.forEach(event => document.removeEventListener(event, handleEvent));
         };
     }, [isAuthenticated, isSleeping]);
-
-    const handleUnlock = (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-
-        // Decode pin_access from user data (encoded with btoa)
-        let correctPin = '123456'; // Default fallback if pin_access is missing
-        if (user && user.pin_access) {
-            try {
-                correctPin = atob(user.pin_access);
-            } catch (err) {
-                console.error('Failed to decode PIN:', err);
-            }
-        }
-
-        if (pin === correctPin) {
-            setIsSleeping(false);
-            setPin('');
-            setError('');
-            resetTimer();
-        } else {
-            setError('PIN salah. Coba lagi.');
-            setPin('');
-            // Refocus after clear
-            setTimeout(() => inputRef.current?.focus(), 10);
-        }
-    };
 
     if (isSleeping) {
         return (
