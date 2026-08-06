@@ -22,18 +22,18 @@ export async function POST(request) {
 
         // Gather last sync timestamps for all targeted tables
         const tablesToSync = [
-            'transaksis', 'bayar_transaksis', 'dashboard_summaries', 
-            'item_transaksis', 'kas', 'logs', 'master_akuns', 
+            'transaksis', 'bayar_transaksis', 'dashboard_summaries',
+            'item_transaksis', 'kas', 'logs', 'master_akuns',
             'master_items', 'master_kas', 'produk_hargas'
         ];
-        
+
         const timestamps = {};
         for (const table of tablesToSync) {
             const ts = await getLastSyncTimestamp(table);
             if (ts) timestamps[table] = ts;
         }
-        
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URI || 'https://v1.kasir.alkaysan.com';
+
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://v1.kasir.alkaysan.com';
         const syncUrl = `${baseUrl}/${shortName}/${uniqueId}/api/v2/sync/download`;
 
         console.log(`[DeltaSync] Pulling from ${syncUrl} with timestamps:`, timestamps);
@@ -52,7 +52,7 @@ export async function POST(request) {
         }
 
         const json = await res.json();
-        
+
         if (!json.success || !json.data) {
             throw new Error(json.message || 'Invalid response format from server');
         }
