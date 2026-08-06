@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { isAuthenticated } from '../hooks/useHelpers';
-import { AlkaysanLogin } from './alkaysan-one';
+import { AlkaysanLogin } from '@noonor/alkaysan-one';
 
 export default function LoginContent({ withBranding = false, isLoadingOverride = false }) {
     const router = useRouter();
