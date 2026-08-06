@@ -1,5 +1,5 @@
 async function testSync() {
-    const url = "https://v1.kasir.alkaysan.co.id/tester/13hrym1a-SY3W-7NuN-a13a-VPYH8DQSX6Wz/api/v2/sync/download";
+    const url = "https://v1.kasir.alkaysan.com/tester/13hrym1a-SY3W-7NuN-a13a-VPYH8DQSX6Wz/api/v2/sync/download";
     console.log("Testing POST to:", url);
     
     try {

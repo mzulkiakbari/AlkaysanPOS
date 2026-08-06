@@ -33,7 +33,7 @@ export async function POST(request) {
             if (ts) timestamps[table] = ts;
         }
         
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URI || 'https://v1.kasir.alkaysan.co.id';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URI || 'https://v1.kasir.alkaysan.com';
         const syncUrl = `${baseUrl}/${shortName}/${uniqueId}/api/v2/sync/download`;
 
         console.log(`[DeltaSync] Pulling from ${syncUrl} with timestamps:`, timestamps);

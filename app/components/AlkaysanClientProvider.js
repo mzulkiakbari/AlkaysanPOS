@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { AlkaysanOAuthProvider } from '@noonor/alkaysan-one';
+import { AlkaysanOAuthProvider } from './alkaysan-one';
 
 export default function AlkaysanClientProvider({ children }) {
   // Determine redirect URI dynamically for Desktop/Localhost support

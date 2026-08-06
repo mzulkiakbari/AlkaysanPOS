@@ -1,0 +1,28 @@
+{
+  "Select Branch": "Pilih Cabang",
+  "Loading": "Sedang memuat",
+  "login": "Masuk",
+  "continueWithAlkaysanAccount": "Masuk",
+  "loggedIn": "Telah Masuk",
+
+  "point_of_sale": "POS",
+  "dashboard": "Dasbor",
+  "sell": "Penjualan",
+  "view_sell": "Lihat Penjualan",
+  "cash": "Buku Kas",
+  "product": "Produk",
+  "report": "Laporan",
+  "setting": "Pengaturan",
+  "documentation": "Dokumentasi",
+  "logout": "Keluar",
+
+  "daily_income": "Penghasilan Harian",
+  "monthly_income": "Penghasilan Bulanan",
+  "a3_print": "Cetakan A3",
+  "unprocessed_transactions": "Transaksi Belum Diproses",
+
+  "unprocessed": "Belum diproses",
+  "in_printing": "Sedang dicetak",
+  "finished_printing": "Selesai dicetak",
+  "has_been_taken": "Sudah diambil"
+}

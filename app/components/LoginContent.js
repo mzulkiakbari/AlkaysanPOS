@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { isAuthenticated } from '../hooks/useHelpers';
-import { AlkaysanLogin } from '@noonor/alkaysan-one';
+import { AlkaysanLogin } from './alkaysan-one';
 
 export default function LoginContent({ withBranding = false, isLoadingOverride = false }) {
     const router = useRouter();
@@ -19,14 +19,14 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
     useEffect(() => {
         const handleAuthSync = (event) => {
             // Pastikan pesan hanya diterima dari domain asli kita
-            if (event.origin !== 'https://kasir.alkaysan.co.id') return;
+            if (event.origin !== 'https://kasir.alkaysan.com') return;
 
             if (event.data?.type === 'ALKAYSAN_AUTH_SYNC' && event.data?.data) {
                 const { localStorage: lsData, cookies } = event.data.data;
                 
                 // Hanya sinkronkan jika ada tanda-tanda sudah login (ada data user/token)
                 if (lsData['user'] || lsData['selectedBranch'] || lsData['token']) {
-                    console.log('🔄 Menerima sesi login dari kasir.alkaysan.co.id');
+                    console.log('🔄 Menerima sesi login dari kasir.alkaysan.com');
                     setIsLoading(true);
 
                     // Pindahkan LocalStorage
@@ -173,7 +173,7 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
         <div className="min-h-screen flex">
             {/* Hidden Iframe untuk Auto-Sync Sesi Login */}
             <iframe 
-                src="https://kasir.alkaysan.co.id/sync-auth" 
+                src="https://kasir.alkaysan.com/sync-auth" 
                 style={{ display: 'none' }} 
                 title="Auth Auto-Sync"
             />
