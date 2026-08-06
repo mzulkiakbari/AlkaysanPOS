@@ -260,6 +260,7 @@ export default function TransactionForm({ onClose, onStepChange, initialData = n
         } catch (error) {
             // Fallback removed
             setProducts([]);
+        } finally {
             setIsLoadingProducts(false);
         }
     }, [currentBranch, productPagination.current_page, productSearch, isOnline]);
