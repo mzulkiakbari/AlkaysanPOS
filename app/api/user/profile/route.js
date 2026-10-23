@@ -4,7 +4,8 @@ export async function GET(req) {
     const accessToken = req.cookies.get('access_token')?.value;
 
     if (!accessToken) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+        console.warn('[api/user/profile] Request received with NO access_token cookie. Cookies present:', req.cookies.getAll().map(c => c.name));
+        return NextResponse.json({ error: 'Not authenticated', reason: 'No access_token cookie in request' }, { status: 401 });
     }
 
     try {
@@ -16,6 +17,7 @@ export async function GET(req) {
         });
 
         if (!response.ok) {
+            console.warn('[api/user/profile] account.alkaysan.com returned status:', response.status);
             if (response.status === 401) {
                 // Try refresh token server-side if possible
                 const refreshToken = req.cookies.get('refresh_token')?.value;
