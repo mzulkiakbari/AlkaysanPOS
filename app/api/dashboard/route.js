@@ -22,12 +22,14 @@ export async function GET(req) {
 
     const fetchDashboard = async (token) => {
         const appUri = process.env.NEXT_PUBLIC_APP_URI || 'https://kasir.alkaysan.com';
+        const apiKey = process.env.INTERNAL_API_KEY || 'kunci_rahasia_alkaysan_bot_2026';
         return fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/${shortName.toLowerCase()}/${uniqueId}/api/v2/dashboard`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'x-access-token': token,
                 'access-token': token,
                 'token': token,
+                'X-API-KEY': apiKey,
                 'Origin': appUri,
                 'Referer': appUri,
                 'Accept': 'application/json'

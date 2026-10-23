@@ -63,6 +63,7 @@ async function handleRequest(req, params, method) {
         });
 
         const appUri = process.env.NEXT_PUBLIC_APP_URI || 'https://kasir.alkaysan.com';
+        const apiKey = process.env.INTERNAL_API_KEY || 'kunci_rahasia_alkaysan_bot_2026';
         const options = {
             method,
             headers: {
@@ -70,6 +71,7 @@ async function handleRequest(req, params, method) {
                 'x-access-token': token,
                 'access-token': token,
                 'token': token,
+                'X-API-KEY': apiKey,
                 'Origin': appUri,
                 'Referer': appUri,
                 'Accept': 'application/json',
