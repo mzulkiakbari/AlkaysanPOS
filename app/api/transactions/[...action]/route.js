@@ -70,10 +70,18 @@ async function handleRequest(req, params, method) {
             targetUrl += (targetUrl.includes('?') ? '&' : '?') + queryString;
         }
 
+        const appUri = process.env.NEXT_PUBLIC_APP_URI || 'https://kasir.alkaysan.com';
         const options = {
             method,
             headers: {
-                ...(token && { 'Authorization': `Bearer ${token}` }),
+                ...(token && {
+                    'Authorization': `Bearer ${token}`,
+                    'x-access-token': token,
+                    'access-token': token,
+                    'token': token
+                }),
+                'Origin': appUri,
+                'Referer': appUri,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },

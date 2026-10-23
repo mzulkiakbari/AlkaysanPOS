@@ -21,9 +21,15 @@ export async function GET(req) {
     }
 
     const fetchDashboard = async (token) => {
+        const appUri = process.env.NEXT_PUBLIC_APP_URI || 'https://kasir.alkaysan.com';
         return fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/${shortName.toLowerCase()}/${uniqueId}/api/v2/dashboard`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
+                'x-access-token': token,
+                'access-token': token,
+                'token': token,
+                'Origin': appUri,
+                'Referer': appUri,
                 'Accept': 'application/json'
             }
         });
