@@ -11,12 +11,25 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(isLoadingOverride);
     const [isElectron, setIsElectron] = useState(false);
+    const [shouldSyncAuth, setShouldSyncAuth] = useState(false);
 
     useEffect(() => {
         setIsLoading(isLoadingOverride);
     }, [isLoadingOverride]);
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const isKasirDomain = window.location.hostname === 'kasir.alkaysan.com';
+            // Hanya aktifkan sync jika BUKAN di domain kasir.alkaysan.com (misal localhost, desktop/electron, ip lokal)
+            if (!isKasirDomain) {
+                setShouldSyncAuth(true);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!shouldSyncAuth) return;
+
         const handleAuthSync = (event) => {
             // Pastikan pesan hanya diterima dari domain asli kita
             if (event.origin !== 'https://kasir.alkaysan.com') return;
@@ -24,8 +37,11 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
             if (event.data?.type === 'ALKAYSAN_AUTH_SYNC' && event.data?.data) {
                 const { localStorage: lsData, cookies } = event.data.data;
                 
-                // Hanya sinkronkan jika ada tanda-tanda sudah login (ada data user/token)
-                if (lsData['user'] || lsData['selectedBranch'] || lsData['token']) {
+                // Hanya sinkronkan jika ada data user yang valid dan di lokal belum login
+                const hasRemoteUser = lsData['pos_user'] || lsData['user'];
+                const hasLocalUser = typeof window !== 'undefined' && (localStorage.getItem('pos_user') || localStorage.getItem('user'));
+
+                if (hasRemoteUser && !hasLocalUser) {
                     console.log('🔄 Menerima sesi login dari kasir.alkaysan.com');
                     setIsLoading(true);
 
@@ -49,7 +65,7 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
 
         window.addEventListener('message', handleAuthSync);
         return () => window.removeEventListener('message', handleAuthSync);
-    }, []);
+    }, [shouldSyncAuth]);
 
     useEffect(() => {
         // Detect if running inside Electron
@@ -171,12 +187,14 @@ export default function LoginContent({ withBranding = false, isLoadingOverride =
 
     return (
         <div className="min-h-screen flex">
-            {/* Hidden Iframe untuk Auto-Sync Sesi Login */}
-            <iframe 
-                src="https://kasir.alkaysan.com/sync-auth" 
-                style={{ display: 'none' }} 
-                title="Auth Auto-Sync"
-            />
+            {/* Hidden Iframe untuk Auto-Sync Sesi Login (hanya dirender di luar domain kasir.alkaysan.com) */}
+            {shouldSyncAuth && (
+                <iframe 
+                    src="https://kasir.alkaysan.com/sync-auth" 
+                    style={{ display: 'none' }} 
+                    title="Auth Auto-Sync"
+                />
+            )}
 
             {/* Left Side - Branding */}
             {withBranding && (

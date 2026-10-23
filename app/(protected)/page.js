@@ -9,22 +9,8 @@ import BranchSelector from '../components/BranchSelector';
 import MainLayout from '../components/MainLayout';
 
 export default function Home() {
-    const { user, isLoading: isAuthLoading, hasBranch, fetchProfile } = useAuth();
+    const { user, isLoading: isAuthLoading, hasBranch } = useAuth();
     const router = useRouter();
-    const [isFetching, setIsFetching] = useState(false);
-
-    useEffect(() => {
-        const checkSession = async () => {
-            // Jika auth loading di context sudah selesai dan user masih null
-            if (!isAuthLoading && !user) {
-                setIsFetching(true);
-                await fetchProfile();
-                setIsFetching(false);
-            }
-        };
-
-        checkSession();
-    }, [isAuthLoading, user, fetchProfile]);
 
     useEffect(() => {
         // Handle post-unauthorized redirect
@@ -37,8 +23,8 @@ export default function Home() {
         }
     }, [isAuthLoading, user, router]);
 
-    // Show processing state if context is loading OR we are manually fetching profile
-    if (isAuthLoading || isFetching) {
+    // Show processing state if context is loading
+    if (isAuthLoading) {
         return <LoginContent withBranding isLoadingOverride={true} />;
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { FetchData } from '../hooks/useFetchData';
 
@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
     const [selectedBranch, setSelectedBranch] = useState(null);
     const [branches, setBranches] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const hasInitializedRef = useRef(false);
     const router = useRouter();
 
     const logoutLocal = useCallback(() => {
@@ -19,7 +20,9 @@ export function AuthProvider({ children }) {
         setSelectedBranch(null);
         setBranches([]);
         localStorage.removeItem('pos_user');
-        router.push('/');
+        if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+            router.push('/');
+        }
     }, [router]);
 
     const loginWithSSO = useCallback((profile) => {
@@ -92,10 +95,14 @@ export function AuthProvider({ children }) {
             clearTimeout(timeoutId);
 
             if (res.status === 401) {
-                const fullPath = window.location.pathname + window.location.search;
-                logoutLocal();
-                // Save redirect path after logoutLocal clears localStorage
-                localStorage.setItem('auth_redirect', fullPath);
+                setUser(null);
+                localStorage.removeItem('pos_user');
+                const isRoot = typeof window !== 'undefined' && window.location.pathname === '/';
+                if (!isRoot && typeof window !== 'undefined') {
+                    const fullPath = window.location.pathname + window.location.search;
+                    localStorage.setItem('auth_redirect', fullPath);
+                    logoutLocal();
+                }
                 return null;
             }
 
@@ -135,6 +142,9 @@ export function AuthProvider({ children }) {
     }, []);
 
     useEffect(() => {
+        if (hasInitializedRef.current) return;
+        hasInitializedRef.current = true;
+
         const initializeAuth = async () => {
             const storedUser = localStorage.getItem('pos_user');
             const storedBranch = localStorage.getItem('pos_branch');
@@ -143,18 +153,30 @@ export function AuthProvider({ children }) {
             let hasCache = false;
 
             if (storedUser) {
-                setUser(JSON.parse(storedUser));
-                hasCache = true;
+                try {
+                    setUser(JSON.parse(storedUser));
+                    hasCache = true;
+                } catch {
+                    localStorage.removeItem('pos_user');
+                }
             }
 
             if (storedBranch) {
-                setSelectedBranch(JSON.parse(storedBranch));
+                try {
+                    setSelectedBranch(JSON.parse(storedBranch));
+                } catch {
+                    localStorage.removeItem('pos_branch');
+                }
             }
 
             if (storedBranches) {
-                const parsedBranches = JSON.parse(storedBranches);
-                const filteredBranches = parsedBranches.filter(b => b.isActive === 1);
-                setBranches(filteredBranches);
+                try {
+                    const parsedBranches = JSON.parse(storedBranches);
+                    const filteredBranches = parsedBranches.filter(b => b.isActive === 1);
+                    setBranches(filteredBranches);
+                } catch {
+                    localStorage.removeItem('pos_branches');
+                }
             }
 
             if (hasCache) {
@@ -170,20 +192,24 @@ export function AuthProvider({ children }) {
         };
 
         initializeAuth();
+    }, [fetchProfile]);
 
+    useEffect(() => {
         const handleUnauthorized = () => {
             console.warn('Unauthorized access detected, logging out...');
-            const fullPath = window.location.pathname + window.location.search;
+            const isRoot = typeof window !== 'undefined' && window.location.pathname === '/';
+            if (!isRoot && typeof window !== 'undefined') {
+                const fullPath = window.location.pathname + window.location.search;
+                localStorage.setItem('auth_redirect', fullPath);
+            }
             logoutLocal();
-            // Save redirect path after logoutLocal clears localStorage
-            localStorage.setItem('auth_redirect', fullPath);
         };
 
         window.addEventListener('auth:unauthorized', handleUnauthorized);
         return () => {
             window.removeEventListener('auth:unauthorized', handleUnauthorized);
         };
-    }, [fetchProfile, logoutLocal]);
+    }, [logoutLocal]);
 
     const selectBranch = useCallback((branch) => {
         setSelectedBranch(branch);
